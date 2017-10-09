@@ -3,21 +3,24 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 
 class Sommet {
 
 	int id;
-
+	
 	int positionInArray;
 
-	boolean alreadyVisited;
+	boolean alreadyAddToStackForVisite;
+	int id_CC;
+	
 	LinkedList<Sommet> voisins;
 
 	public Sommet(int id) {
 
-		this.alreadyVisited = false;
+		this.alreadyAddToStackForVisite = false;
 		this.voisins = new LinkedList<>();
 		this.id = id;
 	}
@@ -33,6 +36,7 @@ class Graph {
 	int size;
 	boolean isDirected;
 
+	int nb_CC;
 	ArrayList<Sommet> sommets;
 	HashMap<Integer, Integer> positionInList;
 
@@ -54,7 +58,7 @@ class Graph {
 
 		toAd.positionInArray = this.size;
 
-		System.out.println("ON AJOUTE : " + toAd.id);
+		//System.out.println("ON AJOUTE : " + toAd.id);
 
 		this.sommets.add(toAd);
 
@@ -63,18 +67,38 @@ class Graph {
 
 	}
 
-	public void PFS() {
-
+	public void PFS(int idSommetD) {
+		
+		int id_CC_Actual=1; // important de commencer a 1 car 0 veut dire null
+		
+		int positionD=this.getPositionInList(idSommetD);
+		
+		System.out.println("NOUS COMMENCER EN POSITION : "+positionD +" pour le sommet de ID : "+idSommetD);
+		
 		int nbvue = 0;
+		
+		int minUnvisited = 0;
+		
+		int minUnvisred_AfterD = positionD+1;
+		
+		if(positionD==0) {
+			minUnvisited=1;
+		}
+		
+		this.nb_CC=1;
 
-		int minUnvisited = 1;
-
-		// Ajouter premier noeud d'une premiere composante connexe
-		Sommet actualSommet = this.sommets.get(0);
+		// Ajouter du sommet D d'une premiere composante connexe
+		
+		boolean inCCofD=true;
+		
+		int nb_Sommet_accessibleFromD=0;
+		
+		Sommet actualSommet = this.sommets.get(positionD);
 
 		Queue<Sommet> pile = new LinkedList<>();
 
 		pile.add(actualSommet);
+		actualSommet.alreadyAddToStackForVisite=true;
 
 		while (nbvue <= this.size) {
 
@@ -85,34 +109,103 @@ class Graph {
 				// actualiser debut autre composante connexe
 				if (actualSommet.positionInArray == minUnvisited) {
 					minUnvisited++;
+					
+					
+					// beacause we already start with the position of D  , we go to the following one 
+					if(minUnvisited==positionD) {
+						minUnvisited=minUnvisred_AfterD;
+					}
+					
+					
 				}
 
-				actualSommet.alreadyVisited = true;
+				//TODO a verifier
+				if(actualSommet.positionInArray == minUnvisred_AfterD) {
+					minUnvisred_AfterD++;
+				}
+				
+				
+				actualSommet.id_CC=id_CC_Actual;
 
-				System.out.println("sommet visiter :" + actualSommet.id);
+				System.out.println("sommet visiter :" + actualSommet.id +" composante associé "+id_CC_Actual);
 
 				nbvue++;
 
-				for (Sommet unVoisin : actualSommet.voisins) {
+				if(this.isDirected) {
+				
+					HashSet<Integer> CC_AlreadySeen = new HashSet<>(); 
+					
+					for (Sommet unVoisin : actualSommet.voisins) {
 
-					if (!unVoisin.alreadyVisited) {
-						pile.add(unVoisin);
+						if(unVoisin.id_CC!=0) {
+							
+							if(id_CC_Actual != unVoisin.id_CC) {
+								
+								if(! CC_AlreadySeen.contains(unVoisin.id_CC)) { //TODO
+									this.nb_CC--;
+									System.out.println("ON IDENTIFIE UNE ANCIENNE CC");
+									CC_AlreadySeen.add(unVoisin.id_CC);
+								}
+								
+							}
+						}
+						
+						if (!unVoisin.alreadyAddToStackForVisite) {
+							
+							if(inCCofD) {
+								nb_Sommet_accessibleFromD++;
+							}
+							
+							pile.add(unVoisin);
+							unVoisin.alreadyAddToStackForVisite = true;
+						}
+						
+					}
+					
+					
+				}else {
+					for (Sommet unVoisin : actualSommet.voisins) {
+
+						if (!unVoisin.alreadyAddToStackForVisite) {
+							
+							if(inCCofD) {
+								nb_Sommet_accessibleFromD++;
+							}
+							
+							pile.add(unVoisin);
+							unVoisin.alreadyAddToStackForVisite = true;
+						}
+						
 					}
 				}
 			}
-
-			// System.out.println("SIZE MIN : "+minUnvisited);
+			
+			inCCofD=false;
 
 			if (nbvue >= this.size) {
 				break;
 			}
+			
+			
 			// Ajouter premier noeud d'une autre composante connexe
 			actualSommet = this.sommets.get(minUnvisited);
+			minUnvisited++;
+			
+			System.out.println("NOUS DEPLACONS EN POSITION : "+minUnvisited +" pour le sommet de ID : "+actualSommet.id);
 			pile.add(actualSommet);
+			actualSommet.alreadyAddToStackForVisite=true;
+			this.nb_CC++;
+			
+			id_CC_Actual++;
 
 		}
+		
+		System.out.println("\nnb Sommet accessible from Id "+idSommetD+" : "+nb_Sommet_accessibleFromD);
+		
+		System.out.println("nb composantes connex "+this.nb_CC);
 
 	}
+
 
 	public void addArc(int actualId, int actualIdVoisin) {
 
@@ -152,33 +245,19 @@ class Graph {
 
 		return null;
 	}
+	
+	public int getPositionInList(int idToFind) {
+		if (this.positionInList.containsKey(idToFind)) {
+			return this.positionInList.get(idToFind);
+		}
+
+		return -1;
+	}
 
 }
 
 
-public class TP1 {
-
-	public static int findDegreeOfSommet(Graph graph, int idSommet) {
-
-		Sommet actualSommet;
-
-		actualSommet = graph.getSommet(idSommet);
-
-		if (actualSommet == null) {
-
-		}
-
-		int nbVoisins=0;
-
-		for (Sommet unVoisin : actualSommet.voisins) {
-
-			nbVoisins++;
-
-		}
-		
-		return nbVoisins;
-
-	}
+public class Exo2 {
 
 	public static void parseAndFillGraph(Graph graph, BufferedReader file) throws IOException {
 
@@ -220,7 +299,6 @@ public class TP1 {
 
 	public static void main(String[] args) {
 
-		System.out.println(Integer.MAX_VALUE);
 		if (args.length < 1) {
 			System.out.println("il manque arguments");
 			return;
@@ -231,11 +309,11 @@ public class TP1 {
 		try {
 			BufferedReader br = GraphPerso.getFile(args[0]);
 
-			Graph monGraph = new Graph(false);
+			Graph monGraph = new Graph(true);
 
 			parseAndFillGraph(monGraph, br);
 
-			monGraph.PFS();
+			monGraph.PFS(2);
 
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
