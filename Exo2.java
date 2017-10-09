@@ -2,6 +2,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -10,16 +12,15 @@ import java.util.Queue;
 class Sommet {
 
 	int id;
-
+	LinkedList<Sommet> voisins;
+	
 	int positionInArray;
-
+	
 	boolean alreadyAddToStackForVisite;
 	int id_CC;
-
-	LinkedList<Sommet> voisins;
+	
 
 	public Sommet(int id) {
-
 		this.alreadyAddToStackForVisite = false;
 		this.voisins = new LinkedList<>();
 		this.id = id;
@@ -35,6 +36,7 @@ class Graph {
 
 	int size;
 	boolean isDirected;
+	boolean isVerbose;
 
 	int nb_CC;
 	ArrayList<Sommet> sommets;
@@ -42,9 +44,10 @@ class Graph {
 
 	Sommet firstSommet;
 
-	public Graph(boolean isDirected) {
+	public Graph(boolean isDirected,boolean isVerbose) {
 
 		this.isDirected = isDirected;
+		this.isVerbose= isVerbose;
 		this.size = 0;
 		this.sommets = new ArrayList<>();
 		this.positionInList = new HashMap<Integer, Integer>();
@@ -73,7 +76,7 @@ class Graph {
 
 		int positionD = this.getPositionInList(idSommetD);
 
-		System.out.println("NOUS COMMENCER EN POSITION : " + positionD + " pour le sommet de ID : " + idSommetD);
+		//System.out.println("NOUS COMMENCER EN POSITION : " + positionD + " pour le sommet de ID : " + idSommetD);
 
 		int nb_Sommet_vue = 0;
 
@@ -124,13 +127,22 @@ class Graph {
 
 				actualSommet.id_CC = id_CC_Actual;
 
-				//System.out.println("sommet visiter :" + actualSommet.id + " composante associé " + id_CC_Actual);
-
+				if(isVerbose) {
+					System.out.println("sommet visiter :" + actualSommet.id );//+ " composante associé " + id_CC_Actual);
+				}
+				
 				nb_Sommet_vue++;
 
 				if (this.isDirected) {
 
-					HashSet<Integer> CC_AlreadySeen = new HashSet<>();
+					Collection<Integer> CC_AlreadySeen;
+					
+					if(actualSommet.voisins.size()>10) {
+						CC_AlreadySeen = new HashSet<>();
+					}else {
+						CC_AlreadySeen = new ArrayList<>();
+					}
+					
 					boolean newLevel = true;
 
 					for (Sommet unVoisin : actualSommet.voisins) {
@@ -141,7 +153,7 @@ class Graph {
 
 								if (!CC_AlreadySeen.contains(unVoisin.id_CC)) {
 									this.nb_CC--;
-									System.out.println("ON IDENTIFIE UNE ANCIENNE CC");
+									//System.out.println("ON IDENTIFIE UNE ANCIENNE CC");
 									CC_AlreadySeen.add(unVoisin.id_CC);
 								}
 
@@ -316,13 +328,13 @@ public class Exo2 {
 		System.out.println(args[0]);
 
 		try {
-			BufferedReader br = GraphPerso.getFile(args[0]);
+			BufferedReader br = new BufferedReader(new FileReader(args[0]));
 
-			Graph monGraph = new Graph(true);
+			Graph monGraph = new Graph(true,true);
 
 			parseAndFillGraph(monGraph, br);
 
-			monGraph.PFS(3);
+			monGraph.PFS(6);
 
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block

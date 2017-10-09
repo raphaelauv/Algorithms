@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -9,10 +10,12 @@ public class Exo1 {
 	int degreeMax;
 	int nbArcs;
 
-	public void printExo1() {
-		System.out.println("nb Sommets : " + nbSommets + "\nMaxIdFind : " + maxIdFind + "\ndegreeMax : " + degreeMax
-				+ "\nNbArcs " + nbArcs);
+	@Override
+	public String toString() {
+		return "nb Sommets : " + nbSommets + "\nMaxIdFind : " + maxIdFind + "\ndegreeMax : " + degreeMax
+				+ "\nNbArcs " + nbArcs;
 	}
+	
 
 	public static void parseFile(BufferedReader br, Exo1 reponses, boolean oriented) throws IOException {
 
@@ -92,7 +95,6 @@ public class Exo1 {
 
 		Exo1 reponses = new Exo1();
 
-		
 		if (args.length < 1) {
 			System.out.println("il manque arguments");
 			return;
@@ -104,11 +106,11 @@ public class Exo1 {
 		}
 
 		try {
-			BufferedReader br = GraphPerso.getFile(args[0]);
-
+			BufferedReader br = new BufferedReader(new FileReader(args[0]));
+			
 			parseFile(br, reponses, oriented);
 
-			reponses.printExo1();
+			System.out.println(reponses);
 
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
