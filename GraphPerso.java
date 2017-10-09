@@ -7,7 +7,7 @@ public class GraphPerso {
 	public static BufferedReader getFile(String file) throws NumberFormatException, IOException {
 
 		BufferedReader br = new BufferedReader(new FileReader(file));
-
+		
 		return br;
 	}
 

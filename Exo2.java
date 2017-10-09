@@ -10,12 +10,12 @@ import java.util.Queue;
 class Sommet {
 
 	int id;
-	
+
 	int positionInArray;
 
 	boolean alreadyAddToStackForVisite;
 	int id_CC;
-	
+
 	LinkedList<Sommet> voisins;
 
 	public Sommet(int id) {
@@ -58,7 +58,7 @@ class Graph {
 
 		toAd.positionInArray = this.size;
 
-		//System.out.println("ON AJOUTE : " + toAd.id);
+		// System.out.println("ON AJOUTE : " + toAd.id);
 
 		this.sommets.add(toAd);
 
@@ -68,39 +68,39 @@ class Graph {
 	}
 
 	public void PFS(int idSommetD) {
-		
-		int id_CC_Actual=1; // important de commencer a 1 car 0 veut dire null
-		
-		int positionD=this.getPositionInList(idSommetD);
-		
-		System.out.println("NOUS COMMENCER EN POSITION : "+positionD +" pour le sommet de ID : "+idSommetD);
-		
-		int nbvue = 0;
-		
+
+		int id_CC_Actual = 1; // important de commencer a 1 car 0 veut dire null
+
+		int positionD = this.getPositionInList(idSommetD);
+
+		System.out.println("NOUS COMMENCER EN POSITION : " + positionD + " pour le sommet de ID : " + idSommetD);
+
+		int nb_Sommet_vue = 0;
+
 		int minUnvisited = 0;
-		
-		int minUnvisred_AfterD = positionD+1;
-		
-		if(positionD==0) {
-			minUnvisited=1;
+		int minUnvisred_AfterD = positionD + 1;
+
+		if (positionD == 0) {
+			minUnvisited = 1;
 		}
+
+		this.nb_CC = 1;
 		
-		this.nb_CC=1;
+		boolean inCCofD = true;
+		int maxDistance_of_D = 0;
+		int id_maxDistance_of_D = idSommetD;
+
+		int nb_Sommet_accessibleFromD = 0;
 
 		// Ajouter du sommet D d'une premiere composante connexe
-		
-		boolean inCCofD=true;
-		
-		int nb_Sommet_accessibleFromD=0;
-		
 		Sommet actualSommet = this.sommets.get(positionD);
 
 		Queue<Sommet> pile = new LinkedList<>();
 
 		pile.add(actualSommet);
-		actualSommet.alreadyAddToStackForVisite=true;
+		actualSommet.alreadyAddToStackForVisite = true;
 
-		while (nbvue <= this.size) {
+		while (nb_Sommet_vue <= this.size) {
 
 			while (!pile.isEmpty()) {
 
@@ -109,103 +109,113 @@ class Graph {
 				// actualiser debut autre composante connexe
 				if (actualSommet.positionInArray == minUnvisited) {
 					minUnvisited++;
-					
-					
-					// beacause we already start with the position of D  , we go to the following one 
-					if(minUnvisited==positionD) {
-						minUnvisited=minUnvisred_AfterD;
+
+					// beacause we already start with the position of D , we go to the following one
+					if (minUnvisited == positionD) {
+						minUnvisited = minUnvisred_AfterD;
 					}
-					
-					
+
 				}
 
-				//TODO a verifier
-				if(actualSommet.positionInArray == minUnvisred_AfterD) {
+				// TODO a verifier
+				if (actualSommet.positionInArray == minUnvisred_AfterD) {
 					minUnvisred_AfterD++;
 				}
-				
-				
-				actualSommet.id_CC=id_CC_Actual;
 
-				System.out.println("sommet visiter :" + actualSommet.id +" composante associé "+id_CC_Actual);
+				actualSommet.id_CC = id_CC_Actual;
 
-				nbvue++;
+				//System.out.println("sommet visiter :" + actualSommet.id + " composante associé " + id_CC_Actual);
 
-				if(this.isDirected) {
-				
-					HashSet<Integer> CC_AlreadySeen = new HashSet<>(); 
-					
+				nb_Sommet_vue++;
+
+				if (this.isDirected) {
+
+					HashSet<Integer> CC_AlreadySeen = new HashSet<>();
+					boolean newLevel = true;
+
 					for (Sommet unVoisin : actualSommet.voisins) {
 
-						if(unVoisin.id_CC!=0) {
-							
-							if(id_CC_Actual != unVoisin.id_CC) {
-								
-								if(! CC_AlreadySeen.contains(unVoisin.id_CC)) { //TODO
+						if (unVoisin.id_CC != 0) {
+
+							if (id_CC_Actual != unVoisin.id_CC) {
+
+								if (!CC_AlreadySeen.contains(unVoisin.id_CC)) {
 									this.nb_CC--;
 									System.out.println("ON IDENTIFIE UNE ANCIENNE CC");
 									CC_AlreadySeen.add(unVoisin.id_CC);
 								}
-								
+
 							}
 						}
-						
+
 						if (!unVoisin.alreadyAddToStackForVisite) {
-							
-							if(inCCofD) {
+
+							if (inCCofD) {
 								nb_Sommet_accessibleFromD++;
+								if (newLevel) {
+									id_maxDistance_of_D = unVoisin.id;
+									maxDistance_of_D++;
+									newLevel = false;
+								}
 							}
-							
+
 							pile.add(unVoisin);
 							unVoisin.alreadyAddToStackForVisite = true;
 						}
-						
+
 					}
-					
-					
-				}else {
+
+				} else {
+
+					boolean newLevel = true;
+
 					for (Sommet unVoisin : actualSommet.voisins) {
 
 						if (!unVoisin.alreadyAddToStackForVisite) {
-							
-							if(inCCofD) {
+
+							if (inCCofD) {
 								nb_Sommet_accessibleFromD++;
+								if (newLevel) {
+									id_maxDistance_of_D = unVoisin.id;
+									maxDistance_of_D++;
+									newLevel = false;
+								}
 							}
-							
+
 							pile.add(unVoisin);
 							unVoisin.alreadyAddToStackForVisite = true;
 						}
-						
+
 					}
 				}
 			}
-			
-			inCCofD=false;
 
-			if (nbvue >= this.size) {
+			inCCofD = false;
+
+			if (nb_Sommet_vue >= this.size) {
 				break;
 			}
-			
-			
+
 			// Ajouter premier noeud d'une autre composante connexe
 			actualSommet = this.sommets.get(minUnvisited);
 			minUnvisited++;
-			
-			System.out.println("NOUS DEPLACONS EN POSITION : "+minUnvisited +" pour le sommet de ID : "+actualSommet.id);
+
+			//System.out.println("NOUS DEPLACONS EN POSITION : " + minUnvisited + " pour le sommet de ID : " + actualSommet.id);
 			pile.add(actualSommet);
-			actualSommet.alreadyAddToStackForVisite=true;
+			actualSommet.alreadyAddToStackForVisite = true;
 			this.nb_CC++;
-			
+
 			id_CC_Actual++;
 
 		}
-		
-		System.out.println("\nnb Sommet accessible from Id "+idSommetD+" : "+nb_Sommet_accessibleFromD);
-		
-		System.out.println("nb composantes connex "+this.nb_CC);
+
+		System.out.println("\nnb Sommet accessible from Id " + idSommetD + " : " + nb_Sommet_accessibleFromD);
+
+		System.out.println("nb composantes connex " + this.nb_CC);
+
+		System.out.println("Sommet le plus eloigné  ID: " + id_maxDistance_of_D + " | Distance: " + maxDistance_of_D);
 
 	}
-
 
 	public void addArc(int actualId, int actualIdVoisin) {
 
@@ -245,7 +255,7 @@ class Graph {
 
 		return null;
 	}
-	
+
 	public int getPositionInList(int idToFind) {
 		if (this.positionInList.containsKey(idToFind)) {
 			return this.positionInList.get(idToFind);
@@ -255,7 +265,6 @@ class Graph {
 	}
 
 }
-
 
 public class Exo2 {
 
@@ -313,7 +322,7 @@ public class Exo2 {
 
 			parseAndFillGraph(monGraph, br);
 
-			monGraph.PFS(2);
+			monGraph.PFS(3);
 
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
