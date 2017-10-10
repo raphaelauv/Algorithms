@@ -1,9 +1,16 @@
+import static java.nio.file.StandardOpenOption.APPEND;
+import static java.nio.file.StandardOpenOption.CREATE;
+
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -37,18 +44,28 @@ class Graph {
 	int size;
 	boolean isDirected;
 	boolean isVerbose;
+	OutputStream out;
 
+	boolean isFile;
 	int nb_CC;
 	ArrayList<Sommet> sommets;
 	HashMap<Integer, Integer> positionInList;
 
 	Sommet firstSommet;
 
-	public Graph(boolean isDirected,boolean isVerbose) {
+	public Graph(boolean isDirected,boolean isVerbose,OutputStream out) {
 
 		this.isDirected = isDirected;
 		this.isVerbose= isVerbose;
 		this.size = 0;
+		this.out=out;
+		
+		if(out!=null) {
+			this.isFile=true;
+		}else {
+			this.isFile=false;
+		}
+		
 		this.sommets = new ArrayList<>();
 		this.positionInList = new HashMap<Integer, Integer>();
 
@@ -70,7 +87,7 @@ class Graph {
 
 	}
 
-	public void PFS(int idSommetD) {
+	public void PFS(int idSommetD) throws IOException {
 
 		int id_CC_Actual = 1; // important de commencer a 1 car 0 veut dire null
 
@@ -133,6 +150,11 @@ class Graph {
 
 				if(isVerbose) {
 					System.out.println("sommet visiter :" + actualSommet.id );//+ " composante associé " + id_CC_Actual);
+				}
+				if(isFile) {
+					String tmp=actualSommet.id+"\n";
+					byte [] tmpB = tmp.getBytes();
+					out.write(tmpB, 0, tmpB.length);
 				}
 				
 				nb_Sommet_vue++;
@@ -326,7 +348,7 @@ public class Exo2 {
         
 		if (args.length < 2) {
 			System.out.println("il manque arguments");
-            System.out.println("Pour exécuter java Exo2 [nom_du_fichier] [sommet_D] [-o] [-v]");
+            System.out.println("Pour exécuter java Exo2 [nom_du_fichier] [sommet_D] [-o] [-v] [-f]");
 
 			return;
 		}
@@ -336,6 +358,7 @@ public class Exo2 {
             int id = Integer.parseInt(args[1]);
             boolean oriented = false;
             boolean verbose = false;
+            boolean file = false;
             if(args.length>2){
                 for(int i=2;i<args.length;i++){
                     if(args[i].equals("-o")){
@@ -344,24 +367,47 @@ public class Exo2 {
                     else if(args[i].equals("-v")){
                         verbose=true;
                     }
+                    else if(args[i].equals("-f")){
+                        file=true;
+                    }
                     else{
                         System.out.println("arguments invalide,essayer -o or -v");
                         return;
                     }
                 }
             }
+            
+            OutputStream out=null;
+            if(file) {
+            	Path file2 = Paths.get("./"+args[0]+"-output_exo2");
+                out = new BufferedOutputStream(Files.newOutputStream(file2, CREATE, APPEND)); //TODO netoyer le fichier si deja existant
+            }
+            
+           
 			BufferedReader br = new BufferedReader(new FileReader(args[0]));
 
-			Graph monGraph = new Graph(oriented,verbose);
+			Graph monGraph = new Graph(oriented,verbose,out);
 
 			parseAndFillGraph(monGraph, br);
 
+			br.close();
+
+			System.out.println("FIN CHARGEMENT Mémoire allouée : " +
+			(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
+
 			monGraph.PFS(id);
+
+			System.out.println("FIN PARCOURS Mémoire allouée : " +
+			(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
+			
+			out.flush();
+			out.close();
 
 		} catch (NumberFormatException e) {
             System.out.println("veuillez entrez un nombre valide");
 		} catch (IOException e) {
-            System.out.println("veuillez entrez un nom de fichier valide");
+			System.out.println("ERREUR DE FICHIER - LECTURE OU ECRITURE");
+            System.out.println("verifier le nom du fichier d'input");
 		}
 
 	}
