@@ -75,11 +75,15 @@ class Graph {
 		int id_CC_Actual = 1; // important de commencer a 1 car 0 veut dire null
 
 		int positionD = this.getPositionInList(idSommetD);
+		
+		if(positionD<0) {
+			System.out.println("ID sommet unknow");
+			return;
+		}
 
 		//System.out.println("NOUS COMMENCER EN POSITION : " + positionD + " pour le sommet de ID : " + idSommetD);
 
 		int nb_Sommet_vue = 0;
-
 		int minUnvisited = 0;
 		int minUnvisred_AfterD = positionD + 1;
 
@@ -135,7 +139,7 @@ class Graph {
 
 				if (this.isDirected) {
 
-					Collection<Integer> CC_AlreadySeen;
+					Collection<Integer> CC_AlreadySeen;//preserve la complexite pour les petits nombres
 					
 					if(actualSommet.voisins.size()>10) {
 						CC_AlreadySeen = new HashSet<>();
@@ -334,7 +338,7 @@ public class Exo2 {
 
 			parseAndFillGraph(monGraph, br);
 
-			monGraph.PFS(6);
+			monGraph.PFS(600);
 
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
