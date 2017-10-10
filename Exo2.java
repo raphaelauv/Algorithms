@@ -323,29 +323,45 @@ public class Exo2 {
 	}
 
 	public static void main(String[] args) {
-
-		if (args.length < 1) {
+        
+		if (args.length < 2) {
 			System.out.println("il manque arguments");
+            System.out.println("Pour exécuter java Exo2 [nom_du_fichier] [sommet_D] [-o] [-v]");
+
 			return;
 		}
-
-		System.out.println(args[0]);
-
+       
+        
 		try {
+            int id = Integer.parseInt(args[1]);
+            boolean oriented = false;
+            boolean verbose = false;
+            if(args.length>2){
+                for(int i=2;i<args.length;i++){
+                    if(args[i].equals("-o")){
+                        oriented=true;
+                    }
+                    else if(args[i].equals("-v")){
+                        verbose=true;
+                    }
+                    else{
+                        System.out.println("arguments invalide,essayer -o or -v");
+                        return;
+                    }
+                }
+            }
 			BufferedReader br = new BufferedReader(new FileReader(args[0]));
 
-			Graph monGraph = new Graph(true,true);
+			Graph monGraph = new Graph(oriented,verbose);
 
 			parseAndFillGraph(monGraph, br);
 
-			monGraph.PFS(600);
+			monGraph.PFS(id);
 
 		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+            System.out.println("veuillez entrez un nombre valide");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+            System.out.println("veuillez entrez un nom de fichier valide");
 		}
 
 	}
