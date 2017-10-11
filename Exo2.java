@@ -21,11 +21,11 @@ import java.util.Queue;
 class Sommet {
 
 	int id;
+	int id_CC;
+	boolean alreadyAddToStackForVisite;
 	LinkedList<Sommet> voisins;
 	
 	//int positionInArray;
-	boolean alreadyAddToStackForVisite;
-	int id_CC;
 
 	public Sommet(int id) {
 		this.alreadyAddToStackForVisite = false;
@@ -41,32 +41,30 @@ class Sommet {
 
 class Graph {
 
-	int size;
 	boolean isDirected;
 	boolean isVerbose;
-	OutputStream out;
-
 	boolean isFile;
+	OutputStream out;
+	LinkedHashMap<Integer, Sommet> mapSommets;
+	
 	
 	/* MODE MAP + LIST
 	ArrayList<Sommet> sommets;
 	HashMap<Integer, Integer> positionInList;
+	int size; //redondant avec positionInList.size()
 	*/
-	
-	LinkedHashMap<Integer, Sommet> mapSommets;
 
 	public Graph(boolean isDirected,boolean isVerbose,OutputStream out) {
 
 		this.isDirected = isDirected;
 		this.isVerbose= isVerbose;
-		this.size = 0;
+		//this.size = 0;
 		this.out=out;
-		
+		this.isFile=false;
 		if(out!=null) {
 			this.isFile=true;
-		}else {
-			this.isFile=false;
 		}
+		
 		/* MODE MAP + LIST
 		this.sommets = new ArrayList<>();
 		this.positionInList = new HashMap<Integer, Integer>();
@@ -79,7 +77,7 @@ class Graph {
 
 		//toAd.positionInArray = this.size;
 		// System.out.println("ON AJOUTE : " + toAd.id);
-		this.size++;
+		//this.size++;
 		//this.sommets.add(toAd);
 		//this.positionInList.put(toAd.id, this.size - 1);
 		this.mapSommets.put(toAd.id, toAd);
@@ -125,13 +123,14 @@ class Graph {
 		int maxDistance_of_D = 0;
 		int id_maxDistance_of_D = idSommetD;
 		int nb_Sommet_accessibleFromD = 0;
-		
+		int nb_SommetInGraph=this.mapSommets.size();
 
-		while (nb_Sommet_vue <= this.size) {
+		while (nb_Sommet_vue < nb_SommetInGraph) {
 
 			while (!pile.isEmpty()) {
-
 				actualSommet = pile.remove();
+				nb_Sommet_vue++;
+				actualSommet.id_CC = id_CC_Actual;
 
 				/*
 				// actualiser debut autre composante connexe
@@ -151,9 +150,7 @@ class Graph {
 				}
 				
 				*/
-
-				actualSommet.id_CC = id_CC_Actual;
-
+				
 				if(isVerbose) {
 					System.out.println("sommet visiter :" + actualSommet.id );//+ " composante associé " + id_CC_Actual);
 				}
@@ -162,38 +159,27 @@ class Graph {
 					byte [] tmpB = tmp.getBytes();
 					out.write(tmpB, 0, tmpB.length);
 				}
-				
-				nb_Sommet_vue++;
 
 				if (this.isDirected) {
-
-					Collection<Integer> CC_AlreadySeen;//preserve la complexite pour les petits nombres
-					
+					Collection<Integer> CC_AlreadySeen;
 					if(actualSommet.voisins.size()>10) {
 						CC_AlreadySeen = new HashSet<>();
 					}else {
-						CC_AlreadySeen = new ArrayList<>();
+						CC_AlreadySeen = new ArrayList<>();//preserve la complexite pour les petits nombres
 					}
-					
 					boolean newLevel = true;
 
 					for (Sommet unVoisin : actualSommet.voisins) {
 
-						if (unVoisin.id_CC != 0) {
-
-							if (id_CC_Actual != unVoisin.id_CC) {
-
-								if (!CC_AlreadySeen.contains(unVoisin.id_CC)) {
-									nb_CC--;
-									//System.out.println("ON IDENTIFIE UNE ANCIENNE CC");
-									CC_AlreadySeen.add(unVoisin.id_CC);
-								}
-
+						if (unVoisin.id_CC != 0 && id_CC_Actual != unVoisin.id_CC) {
+							if (!CC_AlreadySeen.contains(unVoisin.id_CC)) {
+								nb_CC--;
+								//System.out.println("ON IDENTIFIE UNE ANCIENNE CC");
+								CC_AlreadySeen.add(unVoisin.id_CC);
 							}
 						}
 
 						if (!unVoisin.alreadyAddToStackForVisite) {
-
 							if (in_CC_ofD) {
 								nb_Sommet_accessibleFromD++;
 								if (newLevel) {
@@ -210,11 +196,8 @@ class Graph {
 					}
 
 				} else {
-
 					boolean newLevel = true;
-
 					for (Sommet unVoisin : actualSommet.voisins) {
-
 						if (!unVoisin.alreadyAddToStackForVisite) {
 
 							if (in_CC_ofD) {
@@ -225,7 +208,6 @@ class Graph {
 									newLevel = false;
 								}
 							}
-
 							pile.add(unVoisin);
 							unVoisin.alreadyAddToStackForVisite = true;
 						}
@@ -235,8 +217,7 @@ class Graph {
 			}
 
 			in_CC_ofD = false;
-			
-			if (nb_Sommet_vue >= this.size-1) {
+			if (nb_Sommet_vue == nb_SommetInGraph) {
 				break;
 			}
 			do {
