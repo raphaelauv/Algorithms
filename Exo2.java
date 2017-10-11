@@ -5,7 +5,6 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,6 +16,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Queue;
+
+import com.sun.accessibility.internal.resources.accessibility;
 
 class Sommet {
 
@@ -44,7 +45,7 @@ class Graph {
 	boolean isDirected;
 	boolean isVerbose;
 	boolean isFile;
-	OutputStream out;
+	BufferedOutputStream out;
 	LinkedHashMap<Integer, Sommet> mapSommets;
 	
 	
@@ -54,7 +55,7 @@ class Graph {
 	int size; //redondant avec positionInList.size()
 	*/
 
-	public Graph(boolean isDirected,boolean isVerbose,OutputStream out) {
+	public Graph(boolean isDirected,boolean isVerbose,BufferedOutputStream out) {
 
 		this.isDirected = isDirected;
 		this.isVerbose= isVerbose;
@@ -108,6 +109,11 @@ class Graph {
 
 		Sommet actualSommet=this.mapSommets.get(idSommetD);
 
+		if(actualSommet==null) {
+			System.out.println("ID sommet unknow");
+			return;
+		}
+		
 		Queue<Sommet> pile = new LinkedList<>();
 		Iterator<Sommet> iter=this.mapSommets.values().iterator();
 
@@ -125,8 +131,19 @@ class Graph {
 		int nb_Sommet_accessibleFromD = 0;
 		int nb_SommetInGraph=this.mapSommets.size();
 
-		while (nb_Sommet_vue < nb_SommetInGraph) {
+		Collection<Integer> CC_AlreadySeen=null;
+		
 
+		while (nb_Sommet_vue < nb_SommetInGraph) {
+	
+			if(this.isDirected) {
+				if(nb_CC>10) {//si il y a deja un nombre important de CC
+					CC_AlreadySeen = new HashSet<>();
+				}else {
+					CC_AlreadySeen = new ArrayList<>();//preserve la complexite pour les petits nombres
+				}
+			}
+			
 			while (!pile.isEmpty()) {
 				actualSommet = pile.remove();
 				nb_Sommet_vue++;
@@ -161,12 +178,7 @@ class Graph {
 				}
 
 				if (this.isDirected) {
-					Collection<Integer> CC_AlreadySeen;
-					if(actualSommet.voisins.size()>10) {
-						CC_AlreadySeen = new HashSet<>();
-					}else {
-						CC_AlreadySeen = new ArrayList<>();//preserve la complexite pour les petits nombres
-					}
+					
 					boolean newLevel = true;
 
 					for (Sommet unVoisin : actualSommet.voisins) {
@@ -299,8 +311,7 @@ class Graph {
 
 public class Exo2 {
 
-	public static void parseAndFillGraph(Graph graph, BufferedReader file) throws IOException {
-
+	public static boolean parseAndFillGraph(Graph graph, BufferedReader file) throws IOException {
 		String line = "";
 		Long nbLine = 0l;
 		String[] arrayOfLine;
@@ -310,23 +321,37 @@ public class Exo2 {
 		while (line != null) {
 			line = file.readLine();
 
+			nbLine++;
 			if (line == null) {
 				break;
 			}
-			if (line.charAt(0) == '#') {
+			
+			
+			if (line.length()==0 || line.charAt(0) == '#') {
 				continue;
 			}
-			nbLine++;
-			// System.out.println(line);
+			
 			arrayOfLine = line.split(" ");
+			if(arrayOfLine.length!=2) {
+				System.out.println("ERREUR ligne "+nbLine+" format Invalide");
+				return false;
+			}
 
 			// System.out.println(arrayOfLine[0]);
 			// System.out.println(arrayOfLine[1]);
-
+			try {
 			actualId = Integer.parseInt(arrayOfLine[0]);
 			actualIdVoisin = Integer.parseInt(arrayOfLine[1]);
+			
 			graph.addArc(actualId, actualIdVoisin);
+			}catch(NumberFormatException e) {
+				System.out.println("ERREUR ligne "+nbLine+" format Invalide");
+				return false;
+			}
+			
 		}
+		
+		return true;
 
 	}
 
@@ -338,7 +363,8 @@ public class Exo2 {
 			return;
 		}
        
-		OutputStream out=null;
+		
+		BufferedOutputStream out=null;
 		try {
             int id = Integer.parseInt(args[1]);
             boolean oriented = false;
@@ -361,19 +387,18 @@ public class Exo2 {
                     }
                 }
             }
-            
-            
+
             if(file) {
             	Path file2 = Paths.get("./"+args[0]+"-output_exo2");
-                out = new BufferedOutputStream(Files.newOutputStream(file2, CREATE, TRUNCATE_EXISTING)); //TODO netoyer le fichier si deja existant
+                out = new BufferedOutputStream(Files.newOutputStream(file2, CREATE, TRUNCATE_EXISTING));
             }
             
-           
 			BufferedReader br = new BufferedReader(new FileReader(args[0]));
-
 			Graph monGraph = new Graph(oriented,verbose,out);
 
-			parseAndFillGraph(monGraph, br);
+			if(!parseAndFillGraph(monGraph, br)) {
+				return;
+			}
 
 			br.close();
 

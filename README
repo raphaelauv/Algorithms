@@ -1,3 +1,26 @@
 pour compiler :
 
 javac *.java
+
+DISCUSSION :
+
+une implemntation JAVA est proposé , elle parcout le fichier 1 fois
+
+rempli une linkedHasMap de sommet 
+
+chaque sommet socket une liste de ces voisins accessibles
+
+------------------
+
+un seul parcours en largeur reponds a l'ensemble des question de l'exercice 2
+
+On commence du sommet passé en argument jusqu'a ne plus trouvé de voisins jamais visité
+
+	le graph n'etant pas dynamique nous avons un itertor en O(1)
+
+	si Tous les sommet non pas été visité , on parcour la LinkedhasMap juqu'au prochain sommet non visité
+
+	depuis lequel on lance une parcour un largeur
+
+	si on visite un sommet deja visité possedant un id de Composante Connexe differente
+,
