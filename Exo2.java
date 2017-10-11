@@ -1,4 +1,4 @@
-import static java.nio.file.StandardOpenOption.APPEND;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.CREATE;
 
 import java.io.BufferedOutputStream;
@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -21,11 +23,9 @@ class Sommet {
 	int id;
 	LinkedList<Sommet> voisins;
 	
-	int positionInArray;
-	
+	//int positionInArray;
 	boolean alreadyAddToStackForVisite;
 	int id_CC;
-	
 
 	public Sommet(int id) {
 		this.alreadyAddToStackForVisite = false;
@@ -47,11 +47,13 @@ class Graph {
 	OutputStream out;
 
 	boolean isFile;
-	int nb_CC;
+	
+	/* MODE MAP + LIST
 	ArrayList<Sommet> sommets;
 	HashMap<Integer, Integer> positionInList;
-
-	Sommet firstSommet;
+	*/
+	
+	LinkedHashMap<Integer, Sommet> mapSommets;
 
 	public Graph(boolean isDirected,boolean isVerbose,OutputStream out) {
 
@@ -65,64 +67,65 @@ class Graph {
 		}else {
 			this.isFile=false;
 		}
-		
+		/* MODE MAP + LIST
 		this.sommets = new ArrayList<>();
 		this.positionInList = new HashMap<Integer, Integer>();
+		*/
+		this.mapSommets = new LinkedHashMap<Integer,Sommet>();
 
 	}
 
 	public void insertSommet(Sommet toAd) {
-		if (firstSommet == null) {
-			firstSommet = toAd;
-		}
 
-		toAd.positionInArray = this.size;
-
+		//toAd.positionInArray = this.size;
 		// System.out.println("ON AJOUTE : " + toAd.id);
-
-		this.sommets.add(toAd);
-
 		this.size++;
-		this.positionInList.put(toAd.id, this.size - 1);
+		//this.sommets.add(toAd);
+		//this.positionInList.put(toAd.id, this.size - 1);
+		this.mapSommets.put(toAd.id, toAd);
 
 	}
 
 	public void PFS(int idSommetD) throws IOException {
 
-		int id_CC_Actual = 1; // important de commencer a 1 car 0 veut dire null
-
+		/* MODE MAP + LIST
 		int positionD = this.getPositionInList(idSommetD);
-		
 		if(positionD<0) {
 			System.out.println("ID sommet unknow");
 			return;
 		}
-
+		
 		//System.out.println("NOUS COMMENCER EN POSITION : " + positionD + " pour le sommet de ID : " + idSommetD);
 
-		int nb_Sommet_vue = 0;
 		int minUnvisited = 0;
 		int minUnvisred_AfterD = positionD + 1;
-
 		if (positionD == 0) {
 			minUnvisited = 1;
 		}
-
-		this.nb_CC = 1;
 		
-		boolean inCCofD = true;
-		int maxDistance_of_D = 0;
-		int id_maxDistance_of_D = idSommetD;
-
-		int nb_Sommet_accessibleFromD = 0;
-
 		// Ajouter du sommet D d'une premiere composante connexe
 		Sommet actualSommet = this.sommets.get(positionD);
+		Sommet actualSommet=this.mapSommets.get(positionD);
+		*/
+
+		Sommet actualSommet=this.mapSommets.get(idSommetD);
 
 		Queue<Sommet> pile = new LinkedList<>();
+		Iterator<Sommet> iter=this.mapSommets.values().iterator();
 
 		pile.add(actualSommet);
 		actualSommet.alreadyAddToStackForVisite = true;
+		
+		
+		int id_CC_Actual = 1; // important de commencer a 1 car 0 veut dire null
+		int nb_Sommet_vue = 0;
+		
+		int nb_CC = 1;
+		boolean in_CC_ofD = true;
+		int maxDistance_of_D = 0;
+		int id_maxDistance_of_D = idSommetD;
+		int nb_Sommet_accessibleFromD = 0;
+		
 
 		while (nb_Sommet_vue <= this.size) {
 
@@ -130,6 +133,7 @@ class Graph {
 
 				actualSommet = pile.remove();
 
+				/*
 				// actualiser debut autre composante connexe
 				if (actualSommet.positionInArray == minUnvisited) {
 					minUnvisited++;
@@ -140,11 +144,13 @@ class Graph {
 					}
 
 				}
-
+				
 				// TODO a verifier
 				if (actualSommet.positionInArray == minUnvisred_AfterD) {
 					minUnvisred_AfterD++;
 				}
+				
+				*/
 
 				actualSommet.id_CC = id_CC_Actual;
 
@@ -178,7 +184,7 @@ class Graph {
 							if (id_CC_Actual != unVoisin.id_CC) {
 
 								if (!CC_AlreadySeen.contains(unVoisin.id_CC)) {
-									this.nb_CC--;
+									nb_CC--;
 									//System.out.println("ON IDENTIFIE UNE ANCIENNE CC");
 									CC_AlreadySeen.add(unVoisin.id_CC);
 								}
@@ -188,7 +194,7 @@ class Graph {
 
 						if (!unVoisin.alreadyAddToStackForVisite) {
 
-							if (inCCofD) {
+							if (in_CC_ofD) {
 								nb_Sommet_accessibleFromD++;
 								if (newLevel) {
 									id_maxDistance_of_D = unVoisin.id;
@@ -211,7 +217,7 @@ class Graph {
 
 						if (!unVoisin.alreadyAddToStackForVisite) {
 
-							if (inCCofD) {
+							if (in_CC_ofD) {
 								nb_Sommet_accessibleFromD++;
 								if (newLevel) {
 									id_maxDistance_of_D = unVoisin.id;
@@ -228,47 +234,47 @@ class Graph {
 				}
 			}
 
-			inCCofD = false;
-
-			if (nb_Sommet_vue >= this.size) {
+			in_CC_ofD = false;
+			
+			if (nb_Sommet_vue >= this.size-1) {
 				break;
 			}
+			do {
+				/* MODE MAP + LIST
+				actualSommet = this.sommets.get(minUnvisited);
+				minUnvisited++;
+				*/
+				actualSommet = (Sommet) iter.next();
+				
+			}while(actualSommet.alreadyAddToStackForVisite);
+				
 
-			// Ajouter premier noeud d'une autre composante connexe
-			actualSommet = this.sommets.get(minUnvisited);
-			minUnvisited++;
-
+			// Ajouter premier sommet d'une autre composante connexe			
 			//System.out.println("NOUS DEPLACONS EN POSITION : " + minUnvisited + " pour le sommet de ID : " + actualSommet.id);
 			pile.add(actualSommet);
 			actualSommet.alreadyAddToStackForVisite = true;
-			this.nb_CC++;
+			nb_CC++;
 
 			id_CC_Actual++;
 
 		}
 
 		System.out.println("\nnb Sommet accessible from Id " + idSommetD + " : " + nb_Sommet_accessibleFromD);
-
-		System.out.println("nb composantes connex " + this.nb_CC);
-
-		System.out.println("Sommet le plus eloigné  ID: " + id_maxDistance_of_D + " | Distance: " + maxDistance_of_D);
+		System.out.println("nb composantes connex " + nb_CC);
+		System.out.println("Sommet le plus eloigné de ID: " + id_maxDistance_of_D + " | Distance: " + maxDistance_of_D);
 
 	}
 
 	public void addArc(int actualId, int actualIdVoisin) {
 
-		Sommet actualSommet;
-
-		Sommet actualSommetVoisin;
-
-		actualSommet = this.getSommet(actualId);
+		Sommet actualSommet = this.getSommet(actualId);
 
 		if (actualSommet == null) {
 			actualSommet = new Sommet(actualId);
 			this.insertSommet(actualSommet);
 		}
 
-		actualSommetVoisin = this.getSommet(actualIdVoisin);
+		Sommet actualSommetVoisin = this.getSommet(actualIdVoisin);
 
 		if (actualSommetVoisin == null) {
 			actualSommetVoisin = new Sommet(actualIdVoisin);
@@ -285,22 +291,28 @@ class Graph {
 
 	public Sommet getSommet(int idToFind) {
 
+		if(this.mapSommets.containsKey(idToFind)) {
+			return this.mapSommets.get(idToFind);
+		}
+		
+		/* MODE MAP + LIST
 		if (this.positionInList.containsKey(idToFind)) {
 			int position = this.positionInList.get(idToFind);
-
 			return this.sommets.get(position);
 		}
+		*/
 
 		return null;
 	}
 
+	/*
 	public int getPositionInList(int idToFind) {
 		if (this.positionInList.containsKey(idToFind)) {
 			return this.positionInList.get(idToFind);
 		}
-
 		return -1;
 	}
+	*/
 
 }
 
@@ -311,9 +323,7 @@ public class Exo2 {
 		String line = "";
 		Long nbLine = 0l;
 		String[] arrayOfLine;
-
 		int actualId;
-
 		int actualIdVoisin;
 
 		while (line != null) {
@@ -322,13 +332,10 @@ public class Exo2 {
 			if (line == null) {
 				break;
 			}
-
 			if (line.charAt(0) == '#') {
 				continue;
 			}
-
 			nbLine++;
-
 			// System.out.println(line);
 			arrayOfLine = line.split(" ");
 
@@ -336,9 +343,7 @@ public class Exo2 {
 			// System.out.println(arrayOfLine[1]);
 
 			actualId = Integer.parseInt(arrayOfLine[0]);
-
 			actualIdVoisin = Integer.parseInt(arrayOfLine[1]);
-
 			graph.addArc(actualId, actualIdVoisin);
 		}
 
@@ -349,11 +354,10 @@ public class Exo2 {
 		if (args.length < 2) {
 			System.out.println("il manque arguments");
             System.out.println("Pour exécuter java Exo2 [nom_du_fichier] [sommet_D] [-o] [-v] [-f]");
-
 			return;
 		}
        
-        
+		OutputStream out=null;
 		try {
             int id = Integer.parseInt(args[1]);
             boolean oriented = false;
@@ -377,10 +381,10 @@ public class Exo2 {
                 }
             }
             
-            OutputStream out=null;
+            
             if(file) {
             	Path file2 = Paths.get("./"+args[0]+"-output_exo2");
-                out = new BufferedOutputStream(Files.newOutputStream(file2, CREATE, APPEND)); //TODO netoyer le fichier si deja existant
+                out = new BufferedOutputStream(Files.newOutputStream(file2, CREATE, TRUNCATE_EXISTING)); //TODO netoyer le fichier si deja existant
             }
             
            
@@ -396,12 +400,14 @@ public class Exo2 {
 			(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
 
 			monGraph.PFS(id);
+			
+			out.flush();
+			out.close();
 
 			System.out.println("FIN PARCOURS Mémoire allouée : " +
 			(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
 			
-			out.flush();
-			out.close();
+			
 
 		} catch (NumberFormatException e) {
             System.out.println("veuillez entrez un nombre valide");
