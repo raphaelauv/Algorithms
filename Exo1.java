@@ -97,14 +97,23 @@ public class Exo1 {
 
 		if (args.length < 1) {
 			System.out.println("il manque arguments");
+            System.out.println("Pour exécuter java Exo2 [nom_du_fichier] [-o] ");
+
 			return;
 		}
 
 		boolean oriented = false;
 		if (args.length > 1) {
-			System.out.println(args[2]);
+			if(args[1].equals("-o"))
+                oriented=true;
+            else{
+                System.out.println("option inexistante "+args[1]+" essayer -o pour un graphe orienté");
+                return;
+            }
+                
 		}
-
+        
+        
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(args[0]));
 			
