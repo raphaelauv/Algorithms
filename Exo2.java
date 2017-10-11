@@ -149,7 +149,7 @@ class Graph {
 				nb_Sommet_vue++;
 				actualSommet.id_CC = id_CC_Actual;
 
-				
+				/*
 				// actualiser debut autre composante connexe
 				if (actualSommet.positionInArray == minUnvisited) {
 					minUnvisited++;
@@ -161,11 +161,12 @@ class Graph {
 
 				}
 				
+				// TODO a verifier
 				if (actualSommet.positionInArray == minUnvisred_AfterD) {
 					minUnvisred_AfterD++;
 				}
 				
-				
+				*/
 				
 				if(isVerbose) {
 					System.out.println("sommet visiter :" + actualSommet.id );//+ " composante associé " + id_CC_Actual);
@@ -405,9 +406,10 @@ public class Exo2 {
 			(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
 
 			monGraph.PFS(id);
-			
-			out.flush();
-			out.close();
+            if(out != null){
+                out.flush();
+                out.close();
+            }
 
 			System.out.println("FIN PARCOURS Mémoire allouée : " +
 			(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
