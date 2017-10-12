@@ -13,7 +13,7 @@ public class Exo1 {
 	@Override
 	public String toString() {
 		return "nb Sommets : " + nbSommets + "\nMaxIdFind : " + maxIdFind + "\ndegreeMax : " + degreeMax
-				+ "\nNbArcs " + nbArcs;
+				+ "\nNbArcs : " + nbArcs;
 	}
 	
 

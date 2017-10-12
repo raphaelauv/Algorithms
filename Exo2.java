@@ -31,10 +31,16 @@ class CC{
 	}
 	
 	CC getLastPere() {
+		//System.out.println("RECHERCHE PERE");
 		if(pere==null) {return null;}
 		CC tmp=pere;
+		//System.out.println("pour "+id+" pere-> "+pere.id);
+		
 		while(tmp.pere!=null) {
+			
 			tmp=tmp.pere;
+			this.pere = tmp;
+			//System.out.println("pour "+id+" pere-> "+pere.id);
 		}
 		return tmp;
 	}
@@ -147,36 +153,54 @@ class Graph {
 		int nb_Sommet_accessibleFromD = 0;
 		int nb_SommetInGraph = this.mapSommets.size();
 
+		/*
 		Collection<CC> CC_AlreadySeen=null;
+		HashSet<CC> H_CC_AlreadySeen = new HashSet<CC>();
+		ArrayList<CC> A_CC_AlreadySeen = new ArrayList<CC>();
+		*/
+		
 		CC actualCC = null;
 
 		while (nb_Sommet_vue < nb_SommetInGraph) {
 
 			nb_CC++;
 			id_CC_Actual++;
-
+			
 			if (this.isDirected) {
 				actualCC = new CC(id_CC_Actual);
-				if(nb_CC>10) {//si il y a deja un nombre important de CC
-					CC_AlreadySeen = new HashSet<>();
+				/*
+				if(id_CC_Actual>10) {//si il y a deja un nombre important de CC
+					H_CC_AlreadySeen.clear();
+					CC_AlreadySeen = H_CC_AlreadySeen;
 				}else {
-					CC_AlreadySeen = new ArrayList<>();//preserve la complexite pour les petits nombres
+					A_CC_AlreadySeen.clear();
+					CC_AlreadySeen = A_CC_AlreadySeen;//evite le surcout quand il y a peu de CC
 				}
 				CC_AlreadySeen.add(actualCC);
+				*/
 			}
+			
 
 			while (!pile.isEmpty()) {
 
 				actualSommet = pile.remove();
 				nb_Sommet_vue++;
+				/*
+				if (isVerbose) {
+					System.out.println("\nSommet visiter :" + actualSommet.id);// + " composante associé " +
+																		// id_CC_Actual);
+				}
+				*/
+				
 				if (this.isDirected) {
-					actualSommet.id_CC = actualCC;
+					if(actualSommet.id_CC==null) {
+						actualSommet.id_CC = actualCC;
+						//System.out.println("nouveau "+actualSommet.id +" dans la CC "+actualCC.id);
+					}
+					
 				}
 
-				if (isVerbose) {
-					System.out.println("sommet visiter :" + actualSommet.id);// + " composante associé " +
-																				// id_CC_Actual);
-				}
+				
 				if (isFile) {
 					String tmp = actualSommet.id + "\n";
 					byte[] tmpB = tmp.getBytes();
@@ -185,31 +209,34 @@ class Graph {
 
 				boolean newLevel = true;
 				for (Sommet unVoisin : actualSommet.voisins) {
-
+					//System.out.println("\nParcour des voisins de "+actualSommet.id+" voisin : "+unVoisin.id);
 					if (this.isDirected) {
 						if (unVoisin.id_CC != null) {
-
-							// Pour ne faire le travail que une fois par CC croisé durant le parcout de la CC actuel
-							if (!CC_AlreadySeen.contains(unVoisin.id_CC)) {
-								CC_AlreadySeen.add(unVoisin.id_CC);
-								
+							
+							if(unVoisin.id_CC!=actualCC) {
 								CC unVoisinLastPere = unVoisin.id_CC.getLastPere();
-
+								
 								if (unVoisinLastPere == null) {
 									// ancienne CC jamais rataché
+									//System.out.println("SET-PERE ancien "+unVoisin.id +" MIS dans la CC "+actualCC.id);
 									unVoisin.id_CC.setPere(actualCC);
+									nb_CC--;
 								} else {
 									if (unVoisinLastPere != actualCC) {
 										// ancienne CC deja rataché a un autre
 										unVoisin.id_CC.setPere(actualCC);
+										//System.out.println("ON IDENTIFIE UNE ANCIENNE CC pour le sommet " + unVoisin.id);
+										nb_CC--;
 									}
 								}
-								nb_CC--;
-								//System.out.println("ON IDENTIFIE UNE ANCIENNE CC pour le sommet " + unVoisin.id);
 							}
+							// Pour ne faire le travail que une fois par CC croisé durant le parcout de la CC actuel
+							//if (!CC_AlreadySeen.contains(unVoisin.id_CC)) {
+								//CC_AlreadySeen.add(unVoisin.id_CC);
 						} 
 						else {
 							unVoisin.id_CC = actualCC;
+							//System.out.println("nouveau "+unVoisin.id +" dans la CC "+actualCC.id);
 						}
 					}
 
@@ -242,6 +269,7 @@ class Graph {
 				actualSommet = (Sommet) iter.next();
 
 			} while (actualSommet.alreadyAddToStackForVisite);
+			//System.out.println("FIN CC , CHANGEMENT");
 
 			// Ajouter premier sommet d'une autre composante connexe
 			// System.out.println("NOUS DEPLACONS EN POSITION : " + minUnvisited + " pour le
@@ -353,7 +381,9 @@ public class Exo2 {
 
 	}
 	
-	
+	/*
+	 * Uniquement pour tester le fichier output creer
+	 */
 	public static void testOutput(BufferedReader br) throws IOException {
 		String line="";
 		HashSet<Integer> listsommet= new HashSet<Integer>();
@@ -368,7 +398,7 @@ public class Exo2 {
 			a=Integer.parseInt(line);
 			nbVue++;
 			if(listsommet.contains(a)) {
-				System.out.println("ERREUR");
+				System.out.println("ERREUR test output");
 				return;
 			}else {
 				listsommet.add(a);
@@ -422,10 +452,9 @@ public class Exo2 {
 			if(!parseAndFillGraph(monGraph, br)) {
 				return;
 			}
-
 			br.close();
 
-			System.out.println("FIN CHARGEMENT Mémoire allouée : " +
+			System.out.println("FIN LECTURE FICHIER + CREATION GRAPH\nMémoire allouée : " +
 			(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
 
 			monGraph.PFS(id);
@@ -434,12 +463,13 @@ public class Exo2 {
                 out.close();
             }
 
-			System.out.println("FIN PARCOURS Mémoire allouée : " +
+			System.out.println("FIN PARCOUR\nMémoire allouée : " +
 			(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
 			
+			/*
 			BufferedReader br2 = new BufferedReader(new FileReader("./"+args[0]+"-output_exo2"));
-			
 			testOutput(br2);
+			*/
 
 		} catch (NumberFormatException e) {
             System.out.println("veuillez entrez un nombre valide");
