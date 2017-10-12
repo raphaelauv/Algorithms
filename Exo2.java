@@ -8,9 +8,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -49,11 +46,10 @@ class CC{
 class Sommet {
 
 	int id;
+	int distance;
 	CC id_CC;
 	boolean alreadyAddToStackForVisite;
 	LinkedList<Sommet> voisins;
-	
-	//int positionInArray;
 
 	public Sommet(int id) {
 		this.alreadyAddToStackForVisite = false;
@@ -108,6 +104,7 @@ class Graph {
 		int id_maxDistance_of_D = idSommetD;
 		int nb_Sommet_accessibleFromD = 0;
 		int nb_SommetInGraph = this.mapSommets.size();
+		//boolean firstVoisin = true;
 
 		CC actualCC = null;
 		
@@ -116,9 +113,11 @@ class Graph {
 
 		pile.add(actualSommet);
 		actualSommet.alreadyAddToStackForVisite = true;
+		actualSommet.distance=maxDistance_of_D;
 
 		while (nb_Sommet_vue < nb_SommetInGraph) {
-
+			
+			
 			nb_CC++;
 			id_CC_Actual++;
 			
@@ -149,7 +148,12 @@ class Graph {
 					out.write(tmpB, 0, tmpB.length);
 				}
 
-				boolean newLevel = true;
+				//firstVoisin = true;
+				if(in_CC_ofD) {
+					if(actualSommet.distance>maxDistance_of_D) {
+						maxDistance_of_D++;
+					}
+				}
 				for (Sommet unVoisin : actualSommet.voisins) {
 					//System.out.println("\nParcour des voisins de "+actualSommet.id+" voisin : "+unVoisin.id);
 					if (this.isDirected) {
@@ -183,13 +187,14 @@ class Graph {
 					}
 
 					if (!unVoisin.alreadyAddToStackForVisite) {
+						
 						if (in_CC_ofD) {
+							unVoisin.distance=maxDistance_of_D+1;
 							nb_Sommet_accessibleFromD++;
-							if (newLevel) {
+							//if (firstVoisin) {
 								id_maxDistance_of_D = unVoisin.id;
-								maxDistance_of_D++;
-								newLevel = false;
-							}
+								//firstVoisin = false;
+							//}
 						}
 
 						pile.add(unVoisin);
@@ -229,19 +234,20 @@ class Graph {
 			this.insertSommet(actualSommet);
 		}
 
-		Sommet actualSommetVoisin = this.getSommet(actualIdVoisin);
+		if(actualId!=actualIdVoisin) {
+			Sommet actualSommetVoisin = this.getSommet(actualIdVoisin);
 
-		if (actualSommetVoisin == null) {
-			actualSommetVoisin = new Sommet(actualIdVoisin);
-			this.insertSommet(actualSommetVoisin);
+			if (actualSommetVoisin == null) {
+				actualSommetVoisin = new Sommet(actualIdVoisin);
+				this.insertSommet(actualSommetVoisin);
+			}
+
+			actualSommet.insertArc(actualSommetVoisin);
+
+			if (!this.isDirected) {
+				actualSommetVoisin.insertArc(actualSommet);
+			}
 		}
-
-		actualSommet.insertArc(actualSommetVoisin);
-
-		if (!this.isDirected) {
-			actualSommetVoisin.insertArc(actualSommet);
-		}
-
 	}
 
 	public Sommet getSommet(int idToFind) {
@@ -260,13 +266,9 @@ public class Exo2 {
 		String[] arrayOfLine;
 		int actualId;
 		int actualIdVoisin;
-
-		while (line != null) {
-			line = file.readLine();
+		
+		while ((line =file.readLine()) != null) {
 			nbLine++;
-			if (line == null) {
-				break;
-			}
 			if (line.length()==0 || line.charAt(0) == '#') {
 				continue;
 			}
@@ -288,8 +290,7 @@ public class Exo2 {
 				return false;
 			}
 			
-		}
-		
+		}	
 		return true;
 
 	}
