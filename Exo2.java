@@ -17,12 +17,34 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import com.sun.accessibility.internal.resources.accessibility;
+class CC{
+	int id;
+	private CC pere;
+	
+	CC(int id){
+		this.id=id;
+		this.pere=null;
+	}
+	
+	void setPere(CC pere) {
+		this.pere=pere;
+	}
+	
+	CC getLastPere() {
+		if(pere==null) {return null;}
+		CC tmp=pere;
+		
+		while(tmp.pere!=null) {
+			tmp=tmp.pere;
+		}
+		return tmp;
+	}
+}
 
 class Sommet {
 
 	int id;
-	int id_CC;
+	CC id_CC;
 	boolean alreadyAddToStackForVisite;
 	LinkedList<Sommet> voisins;
 	
@@ -87,144 +109,145 @@ class Graph {
 
 	public void PFS(int idSommetD) throws IOException {
 
-		/* MODE MAP + LIST
-		int positionD = this.getPositionInList(idSommetD);
-		if(positionD<0) {
+		/*
+		 * MODE MAP + LIST int positionD = this.getPositionInList(idSommetD);
+		 * if(positionD<0) { System.out.println("ID sommet unknow"); return; }
+		 * 
+		 * //System.out.println("NOUS COMMENCER EN POSITION : " + positionD +
+		 * " pour le sommet de ID : " + idSommetD);
+		 * 
+		 * int minUnvisited = 0; int minUnvisred_AfterD = positionD + 1; if (positionD
+		 * == 0) { minUnvisited = 1; }
+		 * 
+		 * // Ajouter du sommet D d'une premiere composante connexe Sommet actualSommet
+		 * = this.sommets.get(positionD); Sommet
+		 * actualSommet=this.mapSommets.get(positionD);
+		 */
+
+		Sommet actualSommet = this.mapSommets.get(idSommetD);
+
+		if (actualSommet == null) {
 			System.out.println("ID sommet unknow");
 			return;
 		}
-		
-		//System.out.println("NOUS COMMENCER EN POSITION : " + positionD + " pour le sommet de ID : " + idSommetD);
 
-		int minUnvisited = 0;
-		int minUnvisred_AfterD = positionD + 1;
-		if (positionD == 0) {
-			minUnvisited = 1;
-		}
-		
-		// Ajouter du sommet D d'une premiere composante connexe
-		Sommet actualSommet = this.sommets.get(positionD);
-		Sommet actualSommet=this.mapSommets.get(positionD);
-		*/
-
-		Sommet actualSommet=this.mapSommets.get(idSommetD);
-
-		if(actualSommet==null) {
-			System.out.println("ID sommet unknow");
-			return;
-		}
-		
 		Queue<Sommet> pile = new LinkedList<>();
-		Iterator<Sommet> iter=this.mapSommets.values().iterator();
+		Iterator<Sommet> iter = this.mapSommets.values().iterator();
 
 		pile.add(actualSommet);
 		actualSommet.alreadyAddToStackForVisite = true;
-		
-		
-		int id_CC_Actual = 1; // important de commencer a 1 car 0 veut dire null
+
+		int id_CC_Actual = 0;
 		int nb_Sommet_vue = 0;
-		
-		int nb_CC = 1;
+
+		int nb_CC = 0;
 		boolean in_CC_ofD = true;
 		int maxDistance_of_D = 0;
 		int id_maxDistance_of_D = idSommetD;
 		int nb_Sommet_accessibleFromD = 0;
-		int nb_SommetInGraph=this.mapSommets.size();
+		int nb_SommetInGraph = this.mapSommets.size();
 
-		Collection<Integer> CC_AlreadySeen=null;
-		
+		Collection<CC> CC_AlreadySeen=null;
+
+		// HashSet<CC> allCC=new HashSet<CC>();
+
+		CC actualCC = null;
+
+		// allCC.add(actualCC);
 
 		while (nb_Sommet_vue < nb_SommetInGraph) {
-	
-			if(this.isDirected) {
+
+			nb_CC++;
+			id_CC_Actual++;
+
+			if (this.isDirected) {
+				actualCC = new CC(id_CC_Actual);
 				if(nb_CC>10) {//si il y a deja un nombre important de CC
 					CC_AlreadySeen = new HashSet<>();
 				}else {
 					CC_AlreadySeen = new ArrayList<>();//preserve la complexite pour les petits nombres
 				}
+				CC_AlreadySeen.add(actualCC);
 			}
-			
+
 			while (!pile.isEmpty()) {
+
 				actualSommet = pile.remove();
 				nb_Sommet_vue++;
-				actualSommet.id_CC = id_CC_Actual;
+				if (this.isDirected) {
+					actualSommet.id_CC = actualCC;
+				}
 
 				/*
-				// actualiser debut autre composante connexe
-				if (actualSommet.positionInArray == minUnvisited) {
-					minUnvisited++;
+				 * // actualiser debut autre composante connexe if (actualSommet.positionInArray== minUnvisited) { minUnvisited++;
+				 * 
+				 * // beacause we already start with the position of D , we go to the following
+				 * one if (minUnvisited == positionD) { minUnvisited = minUnvisred_AfterD; }
+				 * 
+				 * }
+				 * 
+				 * // TODO a verifier 
+				 * if (actualSommet.positionInArray == minUnvisred_AfterD) {
+				 * minUnvisred_AfterD++; }
+				 * 
+				 */
 
-					// beacause we already start with the position of D , we go to the following one
-					if (minUnvisited == positionD) {
-						minUnvisited = minUnvisred_AfterD;
-					}
-
+				if (isVerbose) {
+					System.out.println("sommet visiter :" + actualSommet.id);// + " composante associé " +
+																				// id_CC_Actual);
 				}
-				
-				// TODO a verifier
-				if (actualSommet.positionInArray == minUnvisred_AfterD) {
-					minUnvisred_AfterD++;
-				}
-				
-				*/
-				
-				if(isVerbose) {
-					System.out.println("sommet visiter :" + actualSommet.id );//+ " composante associé " + id_CC_Actual);
-				}
-				if(isFile) {
-					String tmp=actualSommet.id+"\n";
-					byte [] tmpB = tmp.getBytes();
+				if (isFile) {
+					String tmp = actualSommet.id + "\n";
+					byte[] tmpB = tmp.getBytes();
 					out.write(tmpB, 0, tmpB.length);
 				}
 
-				if (this.isDirected) {
-					
-					boolean newLevel = true;
+				boolean newLevel = true;
+				for (Sommet unVoisin : actualSommet.voisins) {
 
-					for (Sommet unVoisin : actualSommet.voisins) {
+					if (this.isDirected) {
+						if (unVoisin.id_CC != null) {
 
-						if (unVoisin.id_CC != 0 && id_CC_Actual != unVoisin.id_CC) {
+							// Pour ne faire le travail que une fois par CC croisé durant parcout de la CC actuel
 							if (!CC_AlreadySeen.contains(unVoisin.id_CC)) {
-								nb_CC--;
-								//System.out.println("ON IDENTIFIE UNE ANCIENNE CC");
+								
 								CC_AlreadySeen.add(unVoisin.id_CC);
-							}
-						}
+								
+								CC unVoisinLastPere = unVoisin.id_CC.getLastPere();
 
-						if (!unVoisin.alreadyAddToStackForVisite) {
-							if (in_CC_ofD) {
-								nb_Sommet_accessibleFromD++;
-								if (newLevel) {
-									id_maxDistance_of_D = unVoisin.id;
-									maxDistance_of_D++;
-									newLevel = false;
+								if (unVoisinLastPere == null) {
+									// ancienne CC jamais rataché
+									unVoisin.id_CC.setPere(actualCC);
+								} else {
+									if (unVoisinLastPere != actualCC) {
+										// ancienne CC deja rataché a un autre
+										// TODO
+										unVoisin.id_CC.setPere(actualCC);
+									}
 								}
+								nb_CC--;
+								System.out.println("ON IDENTIFIE UNE ANCIENNE CC pour le sommet " + unVoisin.id);
 							}
-
-							pile.add(unVoisin);
-							unVoisin.alreadyAddToStackForVisite = true;
+						} 
+						else {
+							unVoisin.id_CC = actualCC;
 						}
-
 					}
 
-				} else {
-					boolean newLevel = true;
-					for (Sommet unVoisin : actualSommet.voisins) {
-						if (!unVoisin.alreadyAddToStackForVisite) {
-
-							if (in_CC_ofD) {
-								nb_Sommet_accessibleFromD++;
-								if (newLevel) {
-									id_maxDistance_of_D = unVoisin.id;
-									maxDistance_of_D++;
-									newLevel = false;
-								}
+					if (!unVoisin.alreadyAddToStackForVisite) {
+						if (in_CC_ofD) {
+							nb_Sommet_accessibleFromD++;
+							if (newLevel) {
+								id_maxDistance_of_D = unVoisin.id;
+								maxDistance_of_D++;
+								newLevel = false;
 							}
-							pile.add(unVoisin);
-							unVoisin.alreadyAddToStackForVisite = true;
 						}
 
+						pile.add(unVoisin);
+						unVoisin.alreadyAddToStackForVisite = true;
 					}
+
 				}
 			}
 
@@ -233,23 +256,19 @@ class Graph {
 				break;
 			}
 			do {
-				/* MODE MAP + LIST
-				actualSommet = this.sommets.get(minUnvisited);
-				minUnvisited++;
-				*/
+				/*
+				 * MODE MAP + LIST actualSommet = this.sommets.get(minUnvisited);
+				 * minUnvisited++;
+				 */
 				actualSommet = (Sommet) iter.next();
-				
-			}while(actualSommet.alreadyAddToStackForVisite);
-				
 
-			// Ajouter premier sommet d'une autre composante connexe			
-			//System.out.println("NOUS DEPLACONS EN POSITION : " + minUnvisited + " pour le sommet de ID : " + actualSommet.id);
+			} while (actualSommet.alreadyAddToStackForVisite);
+
+			// Ajouter premier sommet d'une autre composante connexe
+			// System.out.println("NOUS DEPLACONS EN POSITION : " + minUnvisited + " pour le
+			// sommet de ID : " + actualSommet.id);
 			pile.add(actualSommet);
 			actualSommet.alreadyAddToStackForVisite = true;
-			nb_CC++;
-
-			id_CC_Actual++;
-
 		}
 
 		System.out.println("\nnb Sommet accessible from Id " + idSommetD + " : " + nb_Sommet_accessibleFromD);
@@ -362,7 +381,6 @@ public class Exo2 {
             System.out.println("Pour exécuter java Exo2 [nom_du_fichier] [sommet_D] [-o] [-v] [-f]");
 			return;
 		}
-       
 		
 		BufferedOutputStream out=null;
 		try {
@@ -413,8 +431,6 @@ public class Exo2 {
 
 			System.out.println("FIN PARCOURS Mémoire allouée : " +
 			(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
-			
-			
 
 		} catch (NumberFormatException e) {
             System.out.println("veuillez entrez un nombre valide");
