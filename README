@@ -12,7 +12,22 @@ Pour éxecuter:
 		-f: pour un fichier de sortit avec la liste des sommes dans l'ordre du parcours en largeur depuis le sommet D
 		-v: pour un mode verbose
 
+
+
+
 Explication exo2
+
+
+
+Complexité en temps 
+	O(n * log(n))  dans le cas ou la hashmap est lourdement rempli
+
+Compelxité en espace
+	O(  n*D + k)
+	
+	n le nombre de sommets
+	D degrée du sommet n
+	k le nombre de CC
 
 une implemntation JAVA est proposé :
 	Un seul parcout du fichier 
