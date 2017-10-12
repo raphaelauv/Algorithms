@@ -41,7 +41,7 @@ public class Exo1 {
 				continue;
 			}
 			
-			arrayOfLine = line.split(" ");
+			arrayOfLine = line.split("\\s");
 
 			actualId = Integer.parseInt(arrayOfLine[0]);
 			actualIdVoisin = Integer.parseInt(arrayOfLine[1]);
@@ -97,7 +97,7 @@ public class Exo1 {
 
 		if (args.length < 1) {
 			System.out.println("il manque arguments");
-            System.out.println("Pour exécuter java Exo2 [nom_du_fichier] [-o] ");
+            System.out.println("Pour exécuter java Exo1 [nom_du_fichier] [-o] ");
 
 			return;
 		}

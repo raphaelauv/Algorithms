@@ -1,26 +1,50 @@
+légende:
+	CC : composante connexe
+
 pour compiler :
+	javac *.java
 
-javac *.java
+Pour éxecuter:
+	java Exo1 [nom_du_fichier] [-o]
+		-o: pour un graph orienté
 
-DISCUSSION :
+	java Exo2 [nom_du_fichier] [sommet_D] [-o] [-v] [-f]
+		-f: pour un fichier de sortit avec la liste des sommes dans l'ordre du parcours en largeur depuis le sommet D
+		-v: pour un mode verbose
 
-une implemntation JAVA est proposé , elle parcout le fichier 1 fois
+Explication exo2
 
-rempli une linkedHasMap de sommet 
+une implemntation JAVA est proposé :
+	Un seul parcout du fichier 
+	Un seul et unique parcour en largeur du graph
 
-chaque sommet socket une liste de ces voisins accessibles
+Une implementation la plus legere possible en memoire est proposé :
 
-------------------
+	- Nous l'avons adapté pour repondre au pire cas ( quand il y a enormement de trous d'id dans le graph , afin de ne pas avoir une complexcité en memoire qui puisse explosé )
 
-un seul parcours en largeur reponds a l'ensemble des question de l'exercice 2
 
-On commence du sommet passé en argument jusqu'a ne plus trouvé de voisins jamais visité
+La structure de donnée est une :
+	LinkedHasMap de (clef,valeur) -> (idSommet , Sommet)
+	Nous avons un Ierateur en O(1) pour l'operation Next
 
-	le graph n'etant pas dynamique nous avons un itertor en O(1)
 
-	si Tous les sommet non pas été visité , on parcour la LinkedhasMap juqu'au prochain sommet non visité
+Chaque sommet stock une liste de ces voisins accessibles (et dans le cas orienté une reference vers la CC associé )
 
-	depuis lequel on lance une parcour un largeur
+---------------------------------------
+Dans le cas orienté :
 
-	si on visite un sommet deja visité possedant un id de Composante Connexe differente
-,
+	Durant un parcour d'une "nouvelle" CC  ( noté CC# )
+		on stock dans un HashSet les CC crée precedament ( noté CC* ) que l'on rencontre , pour ne pas recommencer le travail de Union-Find sur chaque sommet d'entrée de la CC* que l'on rencontrera depuis la CC#
+
+---------------------------------------
+
+Dans tout les cas
+
+	On commence le parcour en largeur du sommet passé en argument jusqu'a ne plus trouvé de voisins jamais visité precedament
+
+		si Tous les sommet non pas été visité , on parcour la LinkedhasMap juqu'au prochain sommet non visité
+
+		depuis lequel on lance un parcour un largeur
+
+		si un sommet voisin deja visité possede une id de CC differente on lui associe la CC actuel
+

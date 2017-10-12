@@ -33,7 +33,6 @@ class CC{
 	CC getLastPere() {
 		if(pere==null) {return null;}
 		CC tmp=pere;
-		
 		while(tmp.pere!=null) {
 			tmp=tmp.pere;
 		}
@@ -97,12 +96,13 @@ class Graph {
 	}
 
 	public void insertSommet(Sommet toAd) {
-
-		//toAd.positionInArray = this.size;
-		// System.out.println("ON AJOUTE : " + toAd.id);
-		//this.size++;
-		//this.sommets.add(toAd);
-		//this.positionInList.put(toAd.id, this.size - 1);
+		/*
+		toAd.positionInArray = this.size;
+		System.out.println("ON AJOUTE : " + toAd.id);
+		this.size++;
+		this.sommets.add(toAd);
+		this.positionInList.put(toAd.id, this.size - 1);
+		*/
 		this.mapSommets.put(toAd.id, toAd);
 
 	}
@@ -205,7 +205,7 @@ class Graph {
 									}
 								}
 								nb_CC--;
-								System.out.println("ON IDENTIFIE UNE ANCIENNE CC pour le sommet " + unVoisin.id);
+								//System.out.println("ON IDENTIFIE UNE ANCIENNE CC pour le sommet " + unVoisin.id);
 							}
 						} 
 						else {
@@ -329,7 +329,7 @@ public class Exo2 {
 				continue;
 			}
 			
-			arrayOfLine = line.split(" ");
+			arrayOfLine = line.split("\\s");
 			if(arrayOfLine.length!=2) {
 				System.out.println("ERREUR ligne "+nbLine+" format Invalide");
 				return false;
@@ -351,6 +351,32 @@ public class Exo2 {
 		
 		return true;
 
+	}
+	
+	
+	public static void testOutput(BufferedReader br) throws IOException {
+		String line="";
+		HashSet<Integer> listsommet= new HashSet<Integer>();
+		int nbVue=0;
+		int a ;
+		while (line != null) {
+			
+			line=br.readLine();
+			if(line==null) {
+				break;
+			}
+			a=Integer.parseInt(line);
+			nbVue++;
+			if(listsommet.contains(a)) {
+				System.out.println("ERREUR");
+				return;
+			}else {
+				listsommet.add(a);
+			}
+			
+		}
+		
+		System.out.println("NB sommet vue :"+nbVue);
 	}
 
 	public static void main(String[] args) {
@@ -384,7 +410,7 @@ public class Exo2 {
                     }
                 }
             }
-
+            
             if(file) {
             	Path file2 = Paths.get("./"+args[0]+"-output_exo2");
                 out = new BufferedOutputStream(Files.newOutputStream(file2, CREATE, TRUNCATE_EXISTING));
@@ -410,6 +436,10 @@ public class Exo2 {
 
 			System.out.println("FIN PARCOURS Mémoire allouée : " +
 			(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
+			
+			BufferedReader br2 = new BufferedReader(new FileReader("./"+args[0]+"-output_exo2"));
+			
+			testOutput(br2);
 
 		} catch (NumberFormatException e) {
             System.out.println("veuillez entrez un nombre valide");
