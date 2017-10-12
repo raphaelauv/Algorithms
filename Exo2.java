@@ -74,74 +74,30 @@ class Graph {
 	boolean isFile;
 	BufferedOutputStream out;
 	LinkedHashMap<Integer, Sommet> mapSommets;
-	
-	
-	/* MODE MAP + LIST
-	ArrayList<Sommet> sommets;
-	HashMap<Integer, Integer> positionInList;
-	int size; //redondant avec positionInList.size()
-	*/
 
 	public Graph(boolean isDirected,boolean isVerbose,BufferedOutputStream out) {
 
 		this.isDirected = isDirected;
 		this.isVerbose= isVerbose;
-		//this.size = 0;
 		this.out=out;
 		this.isFile=false;
 		if(out!=null) {
 			this.isFile=true;
 		}
-		
-		/* MODE MAP + LIST
-		this.sommets = new ArrayList<>();
-		this.positionInList = new HashMap<Integer, Integer>();
-		*/
 		this.mapSommets = new LinkedHashMap<Integer,Sommet>();
-
 	}
 
 	public void insertSommet(Sommet toAd) {
-		/*
-		toAd.positionInArray = this.size;
-		System.out.println("ON AJOUTE : " + toAd.id);
-		this.size++;
-		this.sommets.add(toAd);
-		this.positionInList.put(toAd.id, this.size - 1);
-		*/
 		this.mapSommets.put(toAd.id, toAd);
-
 	}
 
 	public void PFS(int idSommetD) throws IOException {
 
-		/*
-		 * MODE MAP + LIST int positionD = this.getPositionInList(idSommetD);
-		 * if(positionD<0) { System.out.println("ID sommet unknow"); return; }
-		 * 
-		 * //System.out.println("NOUS COMMENCER EN POSITION : " + positionD +
-		 * " pour le sommet de ID : " + idSommetD);
-		 * 
-		 * int minUnvisited = 0; int minUnvisred_AfterD = positionD + 1; if (positionD
-		 * == 0) { minUnvisited = 1; }
-		 * 
-		 * // Ajouter du sommet D d'une premiere composante connexe Sommet actualSommet
-		 * = this.sommets.get(positionD); Sommet
-		 * actualSommet=this.mapSommets.get(positionD);
-		 */
-
 		Sommet actualSommet = this.mapSommets.get(idSommetD);
-
 		if (actualSommet == null) {
 			System.out.println("ID sommet unknow");
 			return;
 		}
-
-		Queue<Sommet> pile = new LinkedList<>();
-		Iterator<Sommet> iter = this.mapSommets.values().iterator();
-
-		pile.add(actualSommet);
-		actualSommet.alreadyAddToStackForVisite = true;
 
 		int id_CC_Actual = 0;
 		int nb_Sommet_vue = 0;
@@ -153,13 +109,13 @@ class Graph {
 		int nb_Sommet_accessibleFromD = 0;
 		int nb_SommetInGraph = this.mapSommets.size();
 
-		/*
-		Collection<CC> CC_AlreadySeen=null;
-		HashSet<CC> H_CC_AlreadySeen = new HashSet<CC>();
-		ArrayList<CC> A_CC_AlreadySeen = new ArrayList<CC>();
-		*/
-		
 		CC actualCC = null;
+		
+		Queue<Sommet> pile = new LinkedList<>();
+		Iterator<Sommet> iter = this.mapSommets.values().iterator();
+
+		pile.add(actualSommet);
+		actualSommet.alreadyAddToStackForVisite = true;
 
 		while (nb_Sommet_vue < nb_SommetInGraph) {
 
@@ -168,36 +124,22 @@ class Graph {
 			
 			if (this.isDirected) {
 				actualCC = new CC(id_CC_Actual);
-				/*
-				if(id_CC_Actual>10) {//si il y a deja un nombre important de CC
-					H_CC_AlreadySeen.clear();
-					CC_AlreadySeen = H_CC_AlreadySeen;
-				}else {
-					A_CC_AlreadySeen.clear();
-					CC_AlreadySeen = A_CC_AlreadySeen;//evite le surcout quand il y a peu de CC
-				}
-				CC_AlreadySeen.add(actualCC);
-				*/
 			}
 			
-
 			while (!pile.isEmpty()) {
 
-				actualSommet = pile.remove();
+				actualSommet = pile.poll();
 				nb_Sommet_vue++;
-				/*
+				
 				if (isVerbose) {
-					System.out.println("\nSommet visiter :" + actualSommet.id);// + " composante associé " +
-																		// id_CC_Actual);
+					System.out.println("\nSommet visiter :" + actualSommet.id);
 				}
-				*/
 				
 				if (this.isDirected) {
 					if(actualSommet.id_CC==null) {
 						actualSommet.id_CC = actualCC;
 						//System.out.println("nouveau "+actualSommet.id +" dans la CC "+actualCC.id);
 					}
-					
 				}
 
 				
@@ -262,18 +204,12 @@ class Graph {
 				break;
 			}
 			do {
-				/*
-				 * MODE MAP + LIST actualSommet = this.sommets.get(minUnvisited);
-				 * minUnvisited++;
-				 */
 				actualSommet = (Sommet) iter.next();
 
 			} while (actualSommet.alreadyAddToStackForVisite);
 			//System.out.println("FIN CC , CHANGEMENT");
 
 			// Ajouter premier sommet d'une autre composante connexe
-			// System.out.println("NOUS DEPLACONS EN POSITION : " + minUnvisited + " pour le
-			// sommet de ID : " + actualSommet.id);
 			pile.add(actualSommet);
 			actualSommet.alreadyAddToStackForVisite = true;
 		}
@@ -309,30 +245,11 @@ class Graph {
 	}
 
 	public Sommet getSommet(int idToFind) {
-
-		if(this.mapSommets.containsKey(idToFind)) {
+		if (this.mapSommets.containsKey(idToFind)) {
 			return this.mapSommets.get(idToFind);
 		}
-		
-		/* MODE MAP + LIST
-		if (this.positionInList.containsKey(idToFind)) {
-			int position = this.positionInList.get(idToFind);
-			return this.sommets.get(position);
-		}
-		*/
-
 		return null;
 	}
-
-	/*
-	public int getPositionInList(int idToFind) {
-		if (this.positionInList.containsKey(idToFind)) {
-			return this.positionInList.get(idToFind);
-		}
-		return -1;
-	}
-	*/
-
 }
 
 public class Exo2 {
@@ -346,13 +263,10 @@ public class Exo2 {
 
 		while (line != null) {
 			line = file.readLine();
-
 			nbLine++;
 			if (line == null) {
 				break;
 			}
-			
-			
 			if (line.length()==0 || line.charAt(0) == '#') {
 				continue;
 			}
@@ -363,8 +277,7 @@ public class Exo2 {
 				return false;
 			}
 
-			// System.out.println(arrayOfLine[0]);
-			// System.out.println(arrayOfLine[1]);
+			// System.out.println(arrayOfLine[0] + arrayOfLine[1]);
 			try {
 			actualId = Integer.parseInt(arrayOfLine[0]);
 			actualIdVoisin = Integer.parseInt(arrayOfLine[1]);
@@ -390,7 +303,6 @@ public class Exo2 {
 		int nbVue=0;
 		int a ;
 		while (line != null) {
-			
 			line=br.readLine();
 			if(line==null) {
 				break;
