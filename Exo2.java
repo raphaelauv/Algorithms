@@ -148,12 +148,7 @@ class Graph {
 		int nb_SommetInGraph = this.mapSommets.size();
 
 		Collection<CC> CC_AlreadySeen=null;
-
-		// HashSet<CC> allCC=new HashSet<CC>();
-
 		CC actualCC = null;
-
-		// allCC.add(actualCC);
 
 		while (nb_Sommet_vue < nb_SommetInGraph) {
 
@@ -178,20 +173,6 @@ class Graph {
 					actualSommet.id_CC = actualCC;
 				}
 
-				/*
-				 * // actualiser debut autre composante connexe if (actualSommet.positionInArray== minUnvisited) { minUnvisited++;
-				 * 
-				 * // beacause we already start with the position of D , we go to the following
-				 * one if (minUnvisited == positionD) { minUnvisited = minUnvisred_AfterD; }
-				 * 
-				 * }
-				 * 
-				 * // TODO a verifier 
-				 * if (actualSommet.positionInArray == minUnvisred_AfterD) {
-				 * minUnvisred_AfterD++; }
-				 * 
-				 */
-
 				if (isVerbose) {
 					System.out.println("sommet visiter :" + actualSommet.id);// + " composante associé " +
 																				// id_CC_Actual);
@@ -208,9 +189,8 @@ class Graph {
 					if (this.isDirected) {
 						if (unVoisin.id_CC != null) {
 
-							// Pour ne faire le travail que une fois par CC croisé durant parcout de la CC actuel
+							// Pour ne faire le travail que une fois par CC croisé durant le parcout de la CC actuel
 							if (!CC_AlreadySeen.contains(unVoisin.id_CC)) {
-								
 								CC_AlreadySeen.add(unVoisin.id_CC);
 								
 								CC unVoisinLastPere = unVoisin.id_CC.getLastPere();
@@ -221,7 +201,6 @@ class Graph {
 								} else {
 									if (unVoisinLastPere != actualCC) {
 										// ancienne CC deja rataché a un autre
-										// TODO
 										unVoisin.id_CC.setPere(actualCC);
 									}
 								}
