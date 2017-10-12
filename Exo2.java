@@ -347,7 +347,7 @@ public class Exo2 {
                         file=true;
                     }
                     else{
-                        System.out.println("arguments invalide,essayer -o or -v");
+                        System.out.println("arguments invalide,essayer -o -v -f");
                         return;
                     }
                 }

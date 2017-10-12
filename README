@@ -33,12 +33,13 @@ Pour éxecuter:
 Complexité en temps :
 	O(n * log(n))  dans le cas ou la hashmap est lourdement rempli
 
-Compelxité en espace :
-	O(  n*D + k)
+Complexité en espace :
+	O(  n*D + k + p)
 	
 	n le nombre de sommets
 	D degrée du sommet n
 	k le nombre de CC
+	p la pile , au max n
 
 une implemntation JAVA est proposé :
 	Un seul et unique parcout du fichier 
