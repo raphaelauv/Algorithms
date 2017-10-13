@@ -28,16 +28,12 @@ class CC{
 	}
 	
 	CC getLastPere() {
-		//System.out.println("RECHERCHE PERE");
 		if(pere==null) {return null;}
 		CC tmp=pere;
-		//System.out.println("pour "+id+" pere-> "+pere.id);
 		
 		while(tmp.pere!=null) {
-			
 			tmp=tmp.pere;
-			this.pere = tmp;
-			//System.out.println("pour "+id+" pere-> "+pere.id);
+			this.pere = tmp; //compression du chemin
 		}
 		return tmp;
 	}
@@ -123,6 +119,8 @@ class Graph {
 			
 			if (this.isDirected) {
 				actualCC = new CC(id_CC_Actual);
+				actualSommet.id_CC = actualCC;
+				//System.out.println("nouveau "+actualSommet.id +" dans la CC "+actualCC.id);
 			}
 			
 			while (!pile.isEmpty()) {
@@ -133,14 +131,6 @@ class Graph {
 				if (isVerbose) {
 					System.out.println("\nSommet visiter :" + actualSommet.id);
 				}
-				
-				if (this.isDirected) {
-					if(actualSommet.id_CC==null) {
-						actualSommet.id_CC = actualCC;
-						//System.out.println("nouveau "+actualSommet.id +" dans la CC "+actualCC.id);
-					}
-				}
-
 				
 				if (isFile) {
 					String tmp = actualSommet.id + "\n";
@@ -159,7 +149,7 @@ class Graph {
 					if (this.isDirected) {
 						if (unVoisin.id_CC != null) {
 							
-							if(unVoisin.id_CC!=actualCC) {
+							if(unVoisin.id_CC.id!=actualCC.id) {
 								CC unVoisinLastPere = unVoisin.id_CC.getLastPere();
 								
 								if (unVoisinLastPere == null) {
@@ -167,19 +157,14 @@ class Graph {
 									//System.out.println("SET-PERE ancien "+unVoisin.id +" MIS dans la CC "+actualCC.id);
 									unVoisin.id_CC.setPere(actualCC);
 									nb_CC--;
-								} else {
-									if (unVoisinLastPere != actualCC) {
-										// ancienne CC deja rataché a un autre
-										unVoisin.id_CC.setPere(actualCC);
-										//System.out.println("ON IDENTIFIE UNE ANCIENNE CC pour le sommet " + unVoisin.id);
-										nb_CC--;
-									}
+								} else if (unVoisinLastPere.id != actualCC.id) {
+									// ancienne CC deja rataché a un autre
+									unVoisinLastPere.setPere(actualCC);
+									//System.out.println("ON IDENTIFIE UNE ANCIENNE CC pour le sommet " + unVoisin.id);
+									nb_CC--;
 								}
 							}
-							// Pour ne faire le travail que une fois par CC croisé durant le parcout de la CC actuel
-							//if (!CC_AlreadySeen.contains(unVoisin.id_CC)) {
-								//CC_AlreadySeen.add(unVoisin.id_CC);
-						} 
+						}
 						else {
 							unVoisin.id_CC = actualCC;
 							//System.out.println("nouveau "+unVoisin.id +" dans la CC "+actualCC.id);
