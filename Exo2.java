@@ -16,45 +16,45 @@ import java.util.Queue;
 
 class CC{
 	int id;
-	private CC pere;
+	private CC father;
 	
 	CC(int id){
 		this.id=id;
-		this.pere=null;
+		this.father=null;
 	}
 	
-	void setPere(CC pere) {
-		this.pere=pere;
+	void setPere(CC father) {
+		this.father=father;
 	}
 	
 	CC getLastPere() {
-		if(pere==null) {return null;}
-		CC tmp=pere;
+		if(father==null) {return null;}
+		CC tmp=father;
 		
-		while(tmp.pere!=null) {
-			tmp=tmp.pere;
-			this.pere = tmp; //compression du chemin
+		while(tmp.father!=null) {
+			tmp=tmp.father;
+			this.father = tmp; //compression du chemin
 		}
 		return tmp;
 	}
 }
 
-class Sommet {
+class Node {
 
 	int id;
 	int distance;
 	CC id_CC;
 	boolean alreadyAddToStackForVisite;
-	LinkedList<Sommet> voisins;
+	LinkedList<Node> neighbours;
 
-	public Sommet(int id) {
+	public Node(int id) {
 		this.alreadyAddToStackForVisite = false;
-		this.voisins = new LinkedList<>();
+		this.neighbours = new LinkedList<>();
 		this.id = id;
 	}
 
-	public void insertArc(Sommet idVoisin) {
-		this.voisins.add(idVoisin);
+	public void insertEdge(Node neighbour) {
+		this.neighbours.add(neighbour);
 	}
 
 }
@@ -65,7 +65,7 @@ class Graph {
 	boolean isVerbose;
 	boolean isFile;
 	BufferedOutputStream out;
-	LinkedHashMap<Integer, Sommet> mapSommets;
+	LinkedHashMap<Integer, Node> mapNodes;
 
 	public Graph(boolean isDirected,boolean isVerbose,BufferedOutputStream out) {
 
@@ -76,42 +76,42 @@ class Graph {
 		if(out!=null) {
 			this.isFile=true;
 		}
-		this.mapSommets = new LinkedHashMap<Integer,Sommet>();
+		this.mapNodes = new LinkedHashMap<Integer,Node>();
 	}
 
-	public void insertSommet(Sommet toAd) {
-		this.mapSommets.put(toAd.id, toAd);
+	public void insertNode(Node toAd) {
+		this.mapNodes.put(toAd.id, toAd);
 	}
 
 	public void PFS(int idSommetD) throws IOException {
 
-		Sommet actualSommet = this.mapSommets.get(idSommetD);
-		if (actualSommet == null) {
+		Node actualNode = this.mapNodes.get(idSommetD);
+		if (actualNode == null) {
 			System.out.println("ID sommet unknow");
 			return;
 		}
 
 		int id_CC_Actual = 0;
-		int nb_Sommet_vue = 0;
+		int nb_Nodes_seen = 0;
 
 		int nb_CC = 0;
 		boolean in_CC_ofD = true;
 		int maxDistance_of_D = 0;
 		int id_maxDistance_of_D = idSommetD;
-		int nb_Sommet_accessibleFromD = 0;
-		int nb_SommetInGraph = this.mapSommets.size();
+		int nb_Nodes_accessibleFromD = 0;
+		int nb_NodesInGraph = this.mapNodes.size();
 		//boolean firstVoisin = true;
 
 		CC actualCC = null;
 		
-		Queue<Sommet> pile = new LinkedList<>();
-		Iterator<Sommet> iter = this.mapSommets.values().iterator();
+		Queue<Node> stack = new LinkedList<>();
+		Iterator<Node> iter = this.mapNodes.values().iterator();
 
-		pile.add(actualSommet);
-		actualSommet.alreadyAddToStackForVisite = true;
-		actualSommet.distance=maxDistance_of_D;
+		stack.add(actualNode);
+		actualNode.alreadyAddToStackForVisite = true;
+		actualNode.distance=maxDistance_of_D;
 
-		while (nb_Sommet_vue < nb_SommetInGraph) {
+		while (nb_Nodes_seen < nb_NodesInGraph) {
 			
 			
 			nb_CC++;
@@ -119,125 +119,125 @@ class Graph {
 			
 			if (this.isDirected) {
 				actualCC = new CC(id_CC_Actual);
-				actualSommet.id_CC = actualCC;
+				actualNode.id_CC = actualCC;
 				//System.out.println("nouveau "+actualSommet.id +" dans la CC "+actualCC.id);
 			}
 			
-			while (!pile.isEmpty()) {
+			while (!stack.isEmpty()) {
 
-				actualSommet = pile.poll();
-				nb_Sommet_vue++;
+				actualNode = stack.poll();
+				nb_Nodes_seen++;
 				
 				if (isVerbose) {
-					System.out.println("\nSommet visiter :" + actualSommet.id);
+					System.out.println("\nSommet visiter :" + actualNode.id);
 				}
 				
 				if (isFile) {
-					String tmp = actualSommet.id + "\n";
+					String tmp = actualNode.id + "\n";
 					byte[] tmpB = tmp.getBytes();
 					out.write(tmpB, 0, tmpB.length);
 				}
 
 				//firstVoisin = true;
 				if(in_CC_ofD) {
-					if(actualSommet.distance>maxDistance_of_D) {
+					if(actualNode.distance>maxDistance_of_D) {
 						maxDistance_of_D++;
 					}
 				}
-				for (Sommet unVoisin : actualSommet.voisins) {
+				for (Node aNeighbour : actualNode.neighbours) {
 					//System.out.println("\nParcour des voisins de "+actualSommet.id+" voisin : "+unVoisin.id);
 					if (this.isDirected) {
-						if (unVoisin.id_CC != null) {
+						if (aNeighbour.id_CC != null) {
 							
-							if(unVoisin.id_CC.id!=actualCC.id) {
-								CC unVoisinLastPere = unVoisin.id_CC.getLastPere();
+							if(aNeighbour.id_CC.id!=actualCC.id) {
+								CC aNeighbourLastFather = aNeighbour.id_CC.getLastPere();
 								
-								if (unVoisinLastPere == null) {
+								if (aNeighbourLastFather == null) {
 									// ancienne CC jamais rataché
 									//System.out.println("SET-PERE ancien "+unVoisin.id +" MIS dans la CC "+actualCC.id);
-									unVoisin.id_CC.setPere(actualCC);
+									aNeighbour.id_CC.setPere(actualCC);
 									nb_CC--;
-								} else if (unVoisinLastPere.id != actualCC.id) {
+								} else if (aNeighbourLastFather.id != actualCC.id) {
 									// ancienne CC deja rataché a un autre
-									unVoisinLastPere.setPere(actualCC);
+									aNeighbourLastFather.setPere(actualCC);
 									//System.out.println("ON IDENTIFIE UNE ANCIENNE CC pour le sommet " + unVoisin.id);
 									nb_CC--;
 								}
 							}
 						}
 						else {
-							unVoisin.id_CC = actualCC;
+							aNeighbour.id_CC = actualCC;
 							//System.out.println("nouveau "+unVoisin.id +" dans la CC "+actualCC.id);
 						}
 					}
 
-					if (!unVoisin.alreadyAddToStackForVisite) {
+					if (!aNeighbour.alreadyAddToStackForVisite) {
 						
 						if (in_CC_ofD) {
-							unVoisin.distance=maxDistance_of_D+1;
-							nb_Sommet_accessibleFromD++;
+							aNeighbour.distance=maxDistance_of_D+1;
+							nb_Nodes_accessibleFromD++;
 							//if (firstVoisin) {
-								id_maxDistance_of_D = unVoisin.id;
+								id_maxDistance_of_D = aNeighbour.id;
 								//firstVoisin = false;
 							//}
 						}
 
-						pile.add(unVoisin);
-						unVoisin.alreadyAddToStackForVisite = true;
+						stack.add(aNeighbour);
+						aNeighbour.alreadyAddToStackForVisite = true;
 					}
 
 				}
 			}
 
 			in_CC_ofD = false;
-			if (nb_Sommet_vue == nb_SommetInGraph) {
+			if (nb_Nodes_seen == nb_NodesInGraph) {
 				break;
 			}
 			do {
-				actualSommet = (Sommet) iter.next();
+				actualNode = (Node) iter.next();
 
-			} while (actualSommet.alreadyAddToStackForVisite);
+			} while (actualNode.alreadyAddToStackForVisite);
 			//System.out.println("FIN CC , CHANGEMENT");
 
 			// Ajouter premier sommet d'une autre composante connexe
-			pile.add(actualSommet);
-			actualSommet.alreadyAddToStackForVisite = true;
+			stack.add(actualNode);
+			actualNode.alreadyAddToStackForVisite = true;
 		}
 
-		System.out.println("\nnb Sommet accessible from Id " + idSommetD + " : " + nb_Sommet_accessibleFromD);
-		System.out.println("nb composantes connex " + nb_CC);
-		System.out.println("Sommet le plus eloigné de ID: " + id_maxDistance_of_D + " | Distance: " + maxDistance_of_D);
+		System.out.println("\nnb Sommet accessible from Id " + idSommetD + " : " + nb_Nodes_accessibleFromD);
+		System.out.println("nb composantes connex : " + nb_CC);
+		System.out.println("Sommet le plus eloigné de "+idSommetD+" est le sommet ID : " + id_maxDistance_of_D + " | Distance: " + maxDistance_of_D);
 
 	}
 
-	public void addArc(int actualId, int actualIdVoisin) {
+	public void addEdge(int actualId, int actualIdNeighbour) {
 
-		Sommet actualSommet = this.getSommet(actualId);
+		Node actualNode = this.getSommet(actualId);
 
-		if (actualSommet == null) {
-			actualSommet = new Sommet(actualId);
-			this.insertSommet(actualSommet);
+		if (actualNode == null) {
+			actualNode = new Node(actualId);
+			this.insertNode(actualNode);
 		}
 
-		if(actualId!=actualIdVoisin) {
-			Sommet actualSommetVoisin = this.getSommet(actualIdVoisin);
+		if(actualId!=actualIdNeighbour) {
+			Node actualNodeNeighbour = this.getSommet(actualIdNeighbour);
 
-			if (actualSommetVoisin == null) {
-				actualSommetVoisin = new Sommet(actualIdVoisin);
-				this.insertSommet(actualSommetVoisin);
+			if (actualNodeNeighbour == null) {
+				actualNodeNeighbour = new Node(actualIdNeighbour);
+				this.insertNode(actualNodeNeighbour);
 			}
 
-			actualSommet.insertArc(actualSommetVoisin);
+			actualNode.insertEdge(actualNodeNeighbour);
 
 			if (!this.isDirected) {
-				actualSommetVoisin.insertArc(actualSommet);
+				actualNodeNeighbour.insertEdge(actualNode);
 			}
 		}
 	}
 
-	public Sommet getSommet(int idToFind) {
-		if (this.mapSommets.containsKey(idToFind)) {
-			return this.mapSommets.get(idToFind);
+	public Node getSommet(int idToFind) {
+		if (this.mapNodes.containsKey(idToFind)) {
+			return this.mapNodes.get(idToFind);
 		}
 		return null;
 	}
@@ -250,7 +250,7 @@ public class Exo2 {
 		Long nbLine = 0l;
 		String[] arrayOfLine;
 		int actualId;
-		int actualIdVoisin;
+		int actualIdNeighbour;
 		
 		while ((line =file.readLine()) != null) {
 			nbLine++;
@@ -267,9 +267,9 @@ public class Exo2 {
 			// System.out.println(arrayOfLine[0] + arrayOfLine[1]);
 			try {
 			actualId = Integer.parseInt(arrayOfLine[0]);
-			actualIdVoisin = Integer.parseInt(arrayOfLine[1]);
+			actualIdNeighbour = Integer.parseInt(arrayOfLine[1]);
 			
-			graph.addArc(actualId, actualIdVoisin);
+			graph.addEdge(actualId, actualIdNeighbour);
 			}catch(NumberFormatException e) {
 				System.out.println("ERREUR ligne "+nbLine+" format Invalide");
 				return false;
@@ -345,9 +345,9 @@ public class Exo2 {
             }
             
 			BufferedReader br = new BufferedReader(new FileReader(args[0]));
-			Graph monGraph = new Graph(oriented,verbose,out);
+			Graph myGraph = new Graph(oriented,verbose,out);
 
-			if(!parseAndFillGraph(monGraph, br)) {
+			if(!parseAndFillGraph(myGraph, br)) {
 				return;
 			}
 			br.close();
@@ -355,7 +355,7 @@ public class Exo2 {
 			System.out.println("FIN LECTURE FICHIER + CREATION GRAPH\nMémoire allouée : " +
 			(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
 
-			monGraph.PFS(id);
+			myGraph.PFS(id);
             if(out != null){
                 out.flush();
                 out.close();

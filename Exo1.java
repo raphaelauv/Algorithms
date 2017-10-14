@@ -5,31 +5,31 @@ import java.util.HashMap;
 
 public class Exo1 {
 
-	int nbSommets;
+	int nbNodes;
 	int maxIdFind;
 	int degreeMax;
-	int nbArcs;
+	int nbEdges;
 
 	@Override
 	public String toString() {
-		return "nb Sommets : " + nbSommets + "\nMaxIdFind : " + maxIdFind + "\ndegreeMax : " + degreeMax
-				+ "\nNbArcs : " + nbArcs;
+		return "nb Sommets : " + nbNodes + "\nMaxIdFind : " + maxIdFind + "\ndegreeMax : " + degreeMax + "\nNbArcs : "
+				+ nbEdges;
 	}
-	
 
-	public static void parseFile(BufferedReader br, Exo1 reponses, boolean oriented) throws IOException {
+	public static void parseFile(BufferedReader br, Exo1 answers, boolean oriented) throws IOException {
 
 		String line = "";
 		Long nbLine = 0l;
 		String[] arrayOfLine;
 
 		int actualId;
+		int actualIdNeighbour;
 
-		int actualIdVoisin;
+		HashMap<Integer, Integer> nodes_and_degree= new HashMap<>();
 
-		HashMap<Integer, Integer> lesSommets = new HashMap<>();
-
+		Integer degree;
 		while (line != null) {
+
 			line = br.readLine();
 
 			if (line == null) {
@@ -37,96 +37,91 @@ public class Exo1 {
 			}
 			nbLine++;
 
-			if(line.charAt(0)=='#') {
+			if (line.charAt(0) == '#') {
 				continue;
 			}
-			
+
 			arrayOfLine = line.split("\\s");
 
 			actualId = Integer.parseInt(arrayOfLine[0]);
-			actualIdVoisin = Integer.parseInt(arrayOfLine[1]);
+			actualIdNeighbour = Integer.parseInt(arrayOfLine[1]);
 
-			if (actualId > reponses.maxIdFind) {
-				reponses.maxIdFind = actualId;
+			if (actualId > answers.maxIdFind) {
+				answers.maxIdFind = actualId;
 			}
-			if (actualIdVoisin > reponses.maxIdFind) {
-				reponses.maxIdFind = actualIdVoisin;
+			if (actualIdNeighbour > answers.maxIdFind) {
+				answers.maxIdFind = actualIdNeighbour;
 			}
 
-			Integer newValue = null;
+			degree = nodes_and_degree.computeIfPresent(actualId, (k, v) -> v + 1);
 
-			newValue = lesSommets.computeIfPresent(actualId, (k, v) -> v + 1);
-
-			if (newValue == null) {
-				lesSommets.put(actualId, 1);
-				reponses.nbSommets++;
+			if (degree == null) {
+				nodes_and_degree.put(actualId, 1);
+				answers.nbNodes++;
 			} else {
-				if (newValue > reponses.degreeMax) {
-					reponses.degreeMax = newValue;
+				if (degree > answers.degreeMax) {
+					answers.degreeMax = degree;
 				}
 			}
 
-			reponses.nbArcs++;
+			answers.nbEdges++;
 
-			if (!oriented) {
-
-				// reponses.nbArcs++; TODO
-
-				newValue = null;
-
-				newValue = lesSommets.computeIfPresent(actualIdVoisin, (k, v) -> v + 1);
-
-				if (newValue == null) {
-					lesSommets.put(actualIdVoisin, 1);
-					reponses.nbSommets++;
+			if (oriented) {
+				degree = nodes_and_degree.get(actualIdNeighbour);
+				if (degree == null) {
+					nodes_and_degree.put(actualIdNeighbour, 0);
+					answers.nbNodes++;
 				}
-				else {
-					if (newValue > reponses.degreeMax) {
-						reponses.degreeMax = newValue;
-					}
+			} else {
+				answers.nbEdges++;
+				degree = nodes_and_degree.computeIfPresent(actualIdNeighbour, (k, v) -> v + 1);
+				if (degree == null) {
+					nodes_and_degree.put(actualIdNeighbour, 1);
+					answers.nbNodes++;
+					degree=1;
 				}
 				
+				if (degree > answers.degreeMax) {
+					answers.degreeMax = degree;
+				}
 			}
 
 		}
 
 	}
+
 	public static void main(String[] args) {
 
-		Exo1 reponses = new Exo1();
+		Exo1 answers = new Exo1();
 
 		if (args.length < 1) {
 			System.out.println("il manque arguments");
-            System.out.println("Pour exécuter java Exo1 [nom_du_fichier] [-o] ");
+			System.out.println("Pour exécuter java Exo1 [nom_du_fichier] [-o] ");
 
 			return;
 		}
 
 		boolean oriented = false;
 		if (args.length > 1) {
-			if(args[1].equals("-o"))
-                oriented=true;
-            else{
-                System.out.println("option inexistante "+args[1]+" essayer -o pour un graphe orienté");
-                return;
-            }
-                
+			if (args[1].equals("-o"))
+				oriented = true;
+			else {
+				System.out.println("option inexistante " + args[1] + " essayer -o pour un graphe orienté");
+				return;
+			}
 		}
-        
-        
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(args[0]));
-			
-			parseFile(br, reponses, oriented);
 
-			System.out.println(reponses);
+			parseFile(br, answers, oriented);
+
+			System.out.println(answers);
 
 		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("veuillez entrez un nombre valide");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("ERREUR DE FICHIER - LECTURE OU ECRITURE");
+            System.out.println("verifier le nom du fichier d'input");
 		}
 
 	}

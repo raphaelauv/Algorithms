@@ -1,24 +1,44 @@
-#####################################################################################################################
-#														TP1 GRI														#
-#####################################################################################################################
+#########################################################################################
+#									TP1 GRI												#
+#########################################################################################
 
 
 M2 INFORMATIQUE PARIS DIDEROT - 2017/2018
 AUVERT RAPHAEL
 LABADENS LUCAS
 
+#########################################################################################
+#									PRECISIONS											#
 
-légende du README:
-	CC -> composante connexe
+	
+	CC -> Composante Connexe
 
-#####################################################################################################################
+	-On ne test pas les doublons dans le fichier d'input
+	-un sommet pour s'acceder lui meme doit definir ( par exemple pour le sommet 3) :
 
-pour COMPILER :
+		3 3
+
+	(sinon impossible d'avoir un sommet seul sans voisins avec le format imposé par le sujet !!)
+
+
+-----------------------
+WIkipedia : (https://fr.wikipedia.org/wiki/Graphe_connexe)
+	Pour un graphe orienté, on parle de connexité si en oubliant l'orientation des arêtes, le graphe est connexe
+-----------------------
+
+	Donc nous considererons que :
+		si il existe un chemin depuis U a V et un chemin depuis K a V alors K et U sont dans la meme CC
+
+
+#########################################################################################
+#									COMPILATION											#
+
 	javac *.java
 
-#####################################################################################################################
+#########################################################################################
+#									EXECUTION											#
 
-Pour éxecuter:
+
 	java Exo1 [nom_du_fichier] [-o]
 		-o: pour un graph orienté
 
@@ -28,13 +48,12 @@ Pour éxecuter:
 		-v: pour un mode verbose
 
 
-
-#####################################################################################################################
-#													Explication Exo2												#
-#####################################################################################################################
+#########################################################################################
+#									EXPLICATION Exo2									#
 
 
-Complexité en temps :
+#########################################
+#		COMPLEXITE EN TEMPS				#
 
 	Dans le cas Pire :
 		ou la hashmap est lourdement rempli et tres peu optimal
@@ -51,16 +70,20 @@ Complexité en temps :
 		0( d * w(n) )
 
 
-#####################################################################################################################
+#########################################
+#		COMPLEXITE EN ESPACE			#
 
-Complexité en espace :
+
 	O(  d + k + p)
 	
 	d le nombre d'arc
 	k le nombre de CC
 	p la pile , au max n
 
-#####################################################################################################################
+
+
+#########################################
+#			IMPLEMENTATION				#
 
 une implemntation JAVA est proposé :
 	Un seul et unique parcout du fichier 
@@ -68,7 +91,8 @@ une implemntation JAVA est proposé :
 
 Une implementation la plus legere possible en memoire est proposé avec comme contraine :
 
-	- Nous l'avons adapté pour repondre au pire cas ( quand il y a enormement de trous d'id dans le graph avec un idMax trés grand , afin de ne pas avoir une complexcité en memoire qui puisse explosé )
+	- Nous l'avons adapté pour repondre au pire cas ( quand il y a enormement de trous d'id dans le graph avec un idMax trés grand ,
+		afin de ne pas avoir une complexcité en memoire qui puisse explosé )
 
 	- Pour le graph orienté : n'est pas stocker la liste des sommets entrants dans chaque sommet
 
@@ -87,8 +111,9 @@ Chaque sommet stock une liste de ces voisins accessibles
 			 une reference vers la CC associé , chaque CC a une reference vers sa CC pere associe durant le parcout
 
 
-#####################################################################################################################
-Algorithme en largeur
+#########################################
+#		ALGORITHME EN LARGEUR			#
+
 
 	Sommet S
 
@@ -116,5 +141,5 @@ Algorithme en largeur
 
 				sinon lui associé la CC*
 
-#####################################################################################################################
+#########################################################################################
 
