@@ -1,5 +1,5 @@
 
-#TP1 Large Graph Informations
+# TP1 Large Graph Informations
 
 
 M2 INFORMATIQUE PARIS DIDEROT - 2017/2018
@@ -7,7 +7,7 @@ AUVERT RAPHAEL
 LABADENS LUCAS
 
 
-###PRECISIONS
+### PRECISIONS
 
 	CC -> Composante Connexe
 
@@ -27,12 +27,12 @@ WIkipedia : (https://fr.wikipedia.org/wiki/Graphe_connexe)
 
 
 
-###COMPILATION
+### COMPILATION
 
 	javac *.java
 
 
-###EXECUTION
+### EXECUTION
 
 	java Exo1 [FileName] [-o]
 		-o: for an oriented graph
@@ -44,11 +44,11 @@ WIkipedia : (https://fr.wikipedia.org/wiki/Graphe_connexe)
 
 
 
-###EXPLICATION Exo2
+### EXPLICATION Exo2
 
 
 
-####TIME COMPLEXITY
+#### TIME COMPLEXITY
 
 	Worst case :
 		ou la hashmap est lourdement rempli et tres peu optimal
@@ -64,7 +64,7 @@ WIkipedia : (https://fr.wikipedia.org/wiki/Graphe_connexe)
 
 
 
-####SPACE COMPLEXITY
+#### SPACE COMPLEXITY
 
 
 	O(  m + k + p)
@@ -76,7 +76,7 @@ WIkipedia : (https://fr.wikipedia.org/wiki/Graphe_connexe)
 
 
 
-####IMPLEMENTATION
+#### IMPLEMENTATION
 
 une implemntation JAVA est proposé :
 	Un seul et unique parcout du fichier 
@@ -105,7 +105,7 @@ Chaque sommet stock une liste de ces voisins accessibles
 
 
 
-####ALGORITHME EN LARGEUR
+#### ALGORITHME EN LARGEUR
 
 
 	Sommet S

@@ -1,5 +1,5 @@
-#ComplexNetworks-GraphTheory
+# ComplexNetworks-GraphTheory
 
-###1 LargeGraphInformations
+### 1 LargeGraphInformations
 
-###2 ClusteringCoefficient
+### 2 ClusteringCoefficient
