@@ -1,15 +1,11 @@
-#########################################################################################
-#							TP1 ClusteringCoefficient									#
-#########################################################################################
-
+# TP2 Clustering Coefficient
 
 M2 INFORMATIQUE PARIS DIDEROT - 2017/2018
 AUVERT RAPHAEL
 
-#########################################################################################
-#									PRECISIONS											#
 
-	
+### PRECISIONS
+
 	CC -> Composante Connexe
 
 	-On ne test pas les doublons dans le fichier d'input
@@ -18,29 +14,27 @@ AUVERT RAPHAEL
 	(sinon impossible d'avoir un sommet seul sans voisins avec le format imposé par le sujet !!)
 
 
-#########################################################################################
-#									COMPILATION											#
+### COMPILATION
+
 	javac *.java
 
-#########################################################################################
-#									EXECUTION											#
 
+### EXECUTION
 
 	java GlobalClusteringCoefficient [FileName]
 
 	java AverageClusteringCoefficient [FileName]
 
 
-#########################################################################################
-#									EXPLICATION 										#
+
+### EXPLICATION
 
 
-#########################################
-#			TIME COMPLEXITY				#
+
+#### TIME COMPLEXITY
 
 	Worst case :
 		
-
 	  	m : number of edges
 	  	n : number of nodes
 	  	w(n) complexité de UNION-FIND optimal
@@ -49,17 +43,13 @@ AUVERT RAPHAEL
 		
 
 
-#########################################
-#			SPACE COMPLEXITY			#
-
-
+#### SPACE COMPLEXITY
 	
 	
 
 
 
-#########################################
-#			IMPLEMENTATION				#
+#### IMPLEMENTATION
 
 une implemntation JAVA est proposé :
 	Un seul et unique parcout du fichier 
@@ -80,11 +70,4 @@ La structure de donnée est uniquement une :
 Chaque sommet stock un linkedHashSet de ces voisins accessibles 
 
 
-#########################################
-#		ALGORITHME 						#
-
-
-
-
-#########################################################################################
-
+#### ALGORITHME

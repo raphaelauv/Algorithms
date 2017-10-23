@@ -13,9 +13,7 @@ LABADENS LUCAS
 
 	-On ne test pas les doublons dans le fichier d'input
 	-un sommet pour s'acceder lui meme doit definir ( par exemple pour le sommet 3) :
-
 		3 3
-
 	(sinon impossible d'avoir un sommet seul sans voisins avec le format imposé par le sujet !!)
 
 
