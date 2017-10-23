@@ -1,4 +1,8 @@
-# TP2 Clustering Coefficient
+# TP2 Clustering Coefficient (Global and Local)
+
+Basic-MT-Skip
+
+## MULTITHREADING Enumerating over Neighbor Pairs WITH Delegating Low-Degree Vertices AND Skipping Vertices with d(v) < 2
 
 M2 INFORMATIQUE PARIS DIDEROT - 2017/2018
 AUVERT RAPHAEL
@@ -71,3 +75,17 @@ Chaque sommet stock un linkedHashSet de ces voisins accessibles
 
 
 #### ALGORITHME
+
+
+### REFERENCES
+
+####Tim Roughgarden† - CS167: Reading in Algorithms Counting Triangles
+Department of Computer Science, Stanford University, 462 Gates Building, 353 Serra Mall, Stanford - March 31, 2014
+
+#### Coen Boot and Prof. Dr. R.H. Bisseling - Algorithms for Determining the Clustering Coefficient in Large Graphs
+Bachelor Thesis - Utrecht University - Faculty of Science Department of Mathematics - January 25, 2016
+
+
+
+
+

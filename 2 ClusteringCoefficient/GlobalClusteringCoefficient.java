@@ -71,6 +71,10 @@ class FindNbTrianglesOfX_WithOptimisation implements Callable<Integer> {
 		int nb = 0;
 	
 		int myDegree = node.neighbours.size();
+		if(myDegree<2) {
+			return 0;
+		}
+		
 		int neighbourDegree;
 		for (Node aNeighbour : node.neighbours) {
 			neighbourDegree=aNeighbour.neighbours.size();
@@ -237,15 +241,12 @@ class Graph {
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
 		CompletionService<Integer> completion = new ExecutorCompletionService<>(execute);
-		
-		int nbTaskToManage=0;
-		Iterator<Node> itNodes = this.mapNodes.values().iterator();
-		
 	
 		Node tmpNode;
 		int degreeTmpNode;
 		long nbV = 0;
 		int nbTri = 0;
+		int nbTaskToManage=0;
 		
 		/*
 		int nbNodeToDo = this.mapNodes.values().size();
@@ -255,6 +256,7 @@ class Graph {
 		Future<Integer> result;
 		*/
 		
+		Iterator<Node> itNodes = this.mapNodes.values().iterator();
 		while(itNodes.hasNext()) {
 			tmpNode=itNodes.next();
 			degreeTmpNode=tmpNode.neighbours.size();
