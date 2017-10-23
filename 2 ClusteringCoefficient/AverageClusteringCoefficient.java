@@ -7,7 +7,7 @@ public class AverageClusteringCoefficient {
 			return;
 		}
 		
-		Graph2 myGraph = GlobalClusteringCoefficient.creatGraph(args[0]);
+		Graph myGraph = GlobalClusteringCoefficient.creatGraph(args[0]);
 		if(myGraph==null) {return;}
 		myGraph.averageClusteringCoefficient();
 		

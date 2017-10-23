@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/*
 class Tuple<X, Y> { 
 	  public final X x; 
 	  public final Y y; 
@@ -21,18 +22,17 @@ class Tuple<X, Y> {
 	    this.y = y; 
 	  } 
 }
+*/
 
-
-
-class Node2 {
+class Node {
 	
 	int id;
 	//Object locker; //not necessary with the AtomicInteger
 	AtomicInteger nbInsideTriangle;
 	
-	Collection<Node2> neighbours;
+	Collection<Node> neighbours;
 	
-	public Node2(int id) {
+	public Node(int id) {
 		this.id = id;
 		this.neighbours = new LinkedHashSet<>(); //better for the parallele version without marqued technique
 		//this.neighbours = new LinkedList<>(); //better for the sequential version with marqued technique
@@ -41,11 +41,11 @@ class Node2 {
 		//this.locker = new Object();
 	}
 	
-	public void insertEdge(Node2 neighbour) {
+	public void insertEdge(Node neighbour) {
 		this.neighbours.add(neighbour);
 	}
 	
-	public static void incrementNbTriangle(Node2 node0, Node2 node1, Node2 node2) {
+	public static void incrementNbTriangle(Node node0, Node node1, Node node2) {
 		/*
 		synchronized (node0.locker) {node0.nbInsideTriangle++;}
 		synchronized (node1.locker) {node1.nbInsideTriangle++;}
@@ -59,10 +59,10 @@ class Node2 {
 
 class FindNbTrianglesOfX_WithOptimisation implements Callable<Integer> {
 
-	private Node2 node;
+	private Node node;
 	boolean enPlace;
 	
-	public FindNbTrianglesOfX_WithOptimisation(Node2 node,boolean enPlace) {
+	public FindNbTrianglesOfX_WithOptimisation(Node node,boolean enPlace) {
 		this.node = node;
 		this.enPlace=enPlace;
 	}
@@ -72,7 +72,7 @@ class FindNbTrianglesOfX_WithOptimisation implements Callable<Integer> {
 	
 		int myDegree = node.neighbours.size();
 		int neighbourDegree;
-		for (Node2 aNeighbour : node.neighbours) {
+		for (Node aNeighbour : node.neighbours) {
 			neighbourDegree=aNeighbour.neighbours.size();
 			
 			if(neighbourDegree>myDegree) {
@@ -82,7 +82,7 @@ class FindNbTrianglesOfX_WithOptimisation implements Callable<Integer> {
 					continue;
 				}
 			}
-			for (Node2 aNN : aNeighbour.neighbours) {
+			for (Node aNN : aNeighbour.neighbours) {
 				if(aNN.id==this.node.id) { 
 					continue;//do not look for myself
 				}
@@ -99,11 +99,12 @@ class FindNbTrianglesOfX_WithOptimisation implements Callable<Integer> {
 				if(node.neighbours.contains(aNN)) {
 					nb++;
 					if(enPlace) {
-					Node2.incrementNbTriangle(this.node, aNeighbour, aNN);
+						Node.incrementNbTriangle(this.node, aNeighbour, aNN);
 					}
 				}
 			}
 		}
+		//not use in case of enPlace
 		return nb /2;//because we count each triangle in the two ways possible
 	}
 }
@@ -134,18 +135,18 @@ class FindNbTiranglesAndDegreeOfX implements Callable<Tuple<Integer,Integer>> {
 */
 
 
-class Graph2 {
+class Graph {
 	
-	LinkedHashMap<Integer, Node2> mapNodes;
+	LinkedHashMap<Integer, Node> mapNodes;
 	
-	public Graph2() {
+	public Graph() {
 		this.mapNodes = new LinkedHashMap<>();
 	}
 	
 	public void addEdge(int actualID, int neighbourID) {
-		Node2 actualNode = this.mapNodes.computeIfAbsent(actualID,k ->new Node2(actualID));
+		Node actualNode = this.mapNodes.computeIfAbsent(actualID,k ->new Node(actualID));
 		if(actualID!=neighbourID) {
-			Node2 neighbourNode = this.mapNodes.computeIfAbsent(neighbourID,k ->new Node2(neighbourID));
+			Node neighbourNode = this.mapNodes.computeIfAbsent(neighbourID,k ->new Node(neighbourID));
 			actualNode.insertEdge(neighbourNode);
 			neighbourNode.insertEdge(actualNode);
 		}
@@ -159,7 +160,7 @@ class Graph2 {
 		CompletionService<Integer> completion = new ExecutorCompletionService<>(execute);
 		
 		int nbTaskCreate=0;
-		Iterator<Node2> itNodes = this.mapNodes.values().iterator();
+		Iterator<Node> itNodes = this.mapNodes.values().iterator();
 		
 		while(itNodes.hasNext()) {
 			
@@ -185,7 +186,7 @@ class Graph2 {
 		execute.shutdown();
 		
 		itNodes = this.mapNodes.values().iterator();
-		Node2 actualNode=null;
+		Node actualNode=null;
 		while(itNodes.hasNext()) {
 			actualNode=itNodes.next();
 			nbTri_X=actualNode.nbInsideTriangle.get()/2;
@@ -238,10 +239,10 @@ class Graph2 {
 		CompletionService<Integer> completion = new ExecutorCompletionService<>(execute);
 		
 		int nbTaskToManage=0;
-		Iterator<Node2> itNodes = this.mapNodes.values().iterator();
+		Iterator<Node> itNodes = this.mapNodes.values().iterator();
 		
 	
-		Node2 tmpNode;
+		Node tmpNode;
 		int degreeTmpNode;
 		long nbV = 0;
 		int nbTri = 0;
@@ -317,7 +318,7 @@ class Graph2 {
 
 public class GlobalClusteringCoefficient {
 	
-	public static boolean parseAndFillGraph2(Graph2 graph, BufferedReader file) throws IOException {
+	public static boolean parseAndFillGraph2(Graph graph, BufferedReader file) throws IOException {
 		String line = "";
 		Long nbLine = 0l;
 		String[] arrayOfLine;
@@ -353,10 +354,10 @@ public class GlobalClusteringCoefficient {
 	}
 	
 	
-	public static Graph2 creatGraph(String arg) {
+	public static Graph creatGraph(String arg) {
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(arg));
-			Graph2 myGraph = new Graph2();
+			Graph myGraph = new Graph();
 
 			if (!parseAndFillGraph2(myGraph, br)) {
 				return null;
@@ -384,7 +385,7 @@ public class GlobalClusteringCoefficient {
 			return;
 		}
 		
-		Graph2 myGraph = creatGraph(args[0]);
+		Graph myGraph = creatGraph(args[0]);
 		if(myGraph==null) {return;}
 		myGraph.globalClusteringCoefficient();
         	

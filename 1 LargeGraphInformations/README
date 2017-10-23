@@ -37,10 +37,10 @@ WIkipedia : (https://fr.wikipedia.org/wiki/Graphe_connexe)
 #									EXECUTION											#
 
 
-	java Exo1 [nom_du_fichier] [-o]
+	java Exo1 [FileName] [-o]
 		-o: for an oriented graph
 
-	java Exo2 [nom_du_fichier] [sommet_D] [-o] [-v] [-f]
+	java Exo2 [FileName] [sommet_D] [-o] [-v] [-f]
 		-o: for an oriented graph
 		-f: pour un fichier de sortie avec la liste des sommes dans l'ordre du parcours en largeur depuis le sommet D
 		-v: verbose mode
