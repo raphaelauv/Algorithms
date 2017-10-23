@@ -1,5 +1,5 @@
 #########################################################################################
-#									TP1 GRI												#
+#							TP1 Large Graph Informations								#
 #########################################################################################
 
 
@@ -25,14 +25,12 @@ LABADENS LUCAS
 WIkipedia : (https://fr.wikipedia.org/wiki/Graphe_connexe)
 	Pour un graphe orienté, on parle de connexité si en oubliant l'orientation des arêtes, le graphe est connexe
 -----------------------
-
 	Donc nous considererons que :
 		si il existe un chemin depuis U a V et un chemin depuis K a V alors K et U sont dans la meme CC
 
 
 #########################################################################################
 #									COMPILATION											#
-
 	javac *.java
 
 #########################################################################################
@@ -40,12 +38,12 @@ WIkipedia : (https://fr.wikipedia.org/wiki/Graphe_connexe)
 
 
 	java Exo1 [nom_du_fichier] [-o]
-		-o: pour un graph orienté
+		-o: for an oriented graph
 
 	java Exo2 [nom_du_fichier] [sommet_D] [-o] [-v] [-f]
-		-o: pour un graph orienté
-		-f: pour un fichier de sortit avec la liste des sommes dans l'ordre du parcours en largeur depuis le sommet D
-		-v: pour un mode verbose
+		-o: for an oriented graph
+		-f: pour un fichier de sortie avec la liste des sommes dans l'ordre du parcours en largeur depuis le sommet D
+		-v: verbose mode
 
 
 #########################################################################################
@@ -55,30 +53,28 @@ WIkipedia : (https://fr.wikipedia.org/wiki/Graphe_connexe)
 #########################################
 #		COMPLEXITE EN TEMPS				#
 
-	Dans le cas Pire :
+	Worst case :
 		ou la hashmap est lourdement rempli et tres peu optimal
 
-		O(d * log(n) * w(n) ) 
+		O(m * log(n) * w(n) ) 
 
-	  	d le nombre d'arc
-	  	n le nombre de sommet
+	  	m : number of edges
+	  	n : number of nodes
 	  	w(n) complexité de UNION-FIND optimal
-
-
 	 
 	Dans le cas Amortie :
-		0( d * w(n) )
+		0( m * w(n) )
 
 
 #########################################
 #		COMPLEXITE EN ESPACE			#
 
 
-	O(  d + k + p)
+	O(  m + k + p)
 	
-	d le nombre d'arc
-	k le nombre de CC
-	p la pile , au max n
+	m : number of edges
+	k : number of CC
+	p : stack ( maximum value = n )
 
 
 
