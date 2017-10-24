@@ -83,7 +83,7 @@ class Graph {
 		this.mapNodes.put(toAd.id, toAd);
 	}
 
-	public void PFS(int idSommetD) throws IOException {
+	public void BFS(int idSommetD) throws IOException {
 
 		Node actualNode = this.mapNodes.get(idSommetD);
 		if (actualNode == null) {
@@ -355,7 +355,7 @@ public class Exo2 {
 			System.out.println("FIN LECTURE FICHIER + CREATION GRAPH\nMémoire allouée : " +
 			(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
 
-			myGraph.PFS(id);
+			myGraph.BFS(id);
             if(out != null){
                 out.flush();
                 out.close();

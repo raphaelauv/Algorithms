@@ -1,5 +1,5 @@
 
-public class DiameterGraph {
+public class Diameter_APL_Graph {
 
 	public static void main(String[] args) {
 		if (args.length < 1) {
@@ -9,7 +9,7 @@ public class DiameterGraph {
 		
 		Graph myGraph = ManageInput.creatGraph(args[0]);
 		if(myGraph==null) {return;}
-		myGraph.diameterOfGraph();
+		myGraph.diameter_and_Averagepathlength_ofGraph();
 		
 	}
 }

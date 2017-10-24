@@ -16,6 +16,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+class Truple<X, Y, Z> {
+	public final X diameter;
+	public final Y sommeOfallVertices;
+	public final Z nbVertices;
+	public Truple(X x, Y y, Z z) {
+		this.diameter = x;
+		this.sommeOfallVertices = y;
+		this.nbVertices = z;
+	}
+}
+
 class Node {
 	
 	int id;
@@ -23,7 +34,7 @@ class Node {
 	
 	//Object locker; 								//not necessary with the AtomicInteger
 	AtomicInteger nbInsideTriangle;					//only for averageClusteringCoefficient
-	private AtomicInteger diameter;							//only for PFS
+	private AtomicInteger diameter;					//only for PFS
 	
 	public Node(int id) {
 		this.id = id;
@@ -67,7 +78,7 @@ class Node {
 /*
  * Diameter job
  */
-class PFS_OfX implements Callable<Integer> {
+class BFS_OfX implements Callable<Truple<Integer,Integer,Integer>> {
 	
 	Node actualNode;
 	boolean all_AlreadyCalculated;		//all the neighbour alredy have their diameter calculated
@@ -75,7 +86,7 @@ class PFS_OfX implements Callable<Integer> {
 	
 	int maxNeighbourDiameter=0;
 	int minNeighbourDiameter=0;
-	public PFS_OfX(Node node) {
+	public BFS_OfX(Node node) {
 		this.actualNode=node;
 	}
 	
@@ -119,8 +130,9 @@ class PFS_OfX implements Callable<Integer> {
 	}
 
 	
-	public Integer call() throws Exception {
+	public Truple<Integer,Integer,Integer> call() throws Exception {
 		
+		/*
 		findMaxAndMinDiameterOfNeighbour();
 		
 		//All my neighbour(s) have the same Degree , so i have the same degree
@@ -133,7 +145,10 @@ class PFS_OfX implements Callable<Integer> {
 			actualNode.setDiameterOfNode(maxNeighbourDiameter+1);
 			return maxNeighbourDiameter+1;
 		}
+		*/
 		
+		int nbVertices=0;
+		int sommeOfallVertices=0;
 		
 		Queue<Node> stack = new LinkedList<>();
 		Node tmpNode=actualNode;
@@ -147,7 +162,6 @@ class PFS_OfX implements Callable<Integer> {
 
 		
 		while (!stack.isEmpty()) {
-			
 			tmpNode = stack.poll();
 			actualDistance=nodesAlreadySeen.get(tmpNode);
 			if(actualDistance>maxDistance_of_D) {
@@ -155,18 +169,20 @@ class PFS_OfX implements Callable<Integer> {
 			}
 			
 			for (Node aNeighbour : tmpNode.neighbours) {
-
 				actualDistance=nodesAlreadySeen.get(aNeighbour);
 				if(actualDistance==null) {
+					nbVertices++;
+					sommeOfallVertices+=maxDistance_of_D+1;
 					nodesAlreadySeen.put(aNeighbour, maxDistance_of_D+1);
 					stack.add(aNeighbour);
 				}
 			}
 		}
-		System.out.println("node "+actualNode.id+" : "+maxDistance_of_D);
+		//System.out.println("node "+actualNode.id+" : "+maxDistance_of_D);
 		
 		actualNode.setDiameterOfNode(maxDistance_of_D);
-		return maxDistance_of_D;
+		//return maxDistance_of_D;
+		return new Truple<Integer,Integer,Integer>(maxDistance_of_D,sommeOfallVertices,nbVertices);
 	}
 }
 
@@ -248,27 +264,32 @@ class Graph {
 	}
 
 	
-	public void diameterOfGraph() {
+	public void diameter_and_Averagepathlength_ofGraph() {
 		
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
-		CompletionService<Integer> completion = new ExecutorCompletionService<>(execute);
+		CompletionService<Truple<Integer,Integer,Integer>> completion = new ExecutorCompletionService<>(execute);
 
 		int nbTaskCreate = 0;
 		Iterator<Node> itNodes = this.mapNodes.values().iterator();
 		while (itNodes.hasNext()) {
-			completion.submit(new PFS_OfX(itNodes.next()));
+			completion.submit(new BFS_OfX(itNodes.next()));
 			nbTaskCreate++;
 		}
 
 		int diameter = 0;
-		int acutalDistance =0;
+		long nbVertices=0;
+		long sommeOfallVertices=0;
+		//int acutalDistance =0;
+		Truple<Integer,Integer,Integer> result=null;
 		for (int i = 0; i < nbTaskCreate; i++) {
 			try {
-				acutalDistance=completion.take().get();
-				if(acutalDistance>diameter) {
-					diameter=acutalDistance;
+				result=completion.take().get();
+				if(result.diameter>diameter) {
+					diameter=result.diameter;
 				}
+				nbVertices+=result.nbVertices;
+				sommeOfallVertices+=result.sommeOfallVertices;
 			} catch (InterruptedException | ExecutionException e) {
 				System.out.println("ERROR OCCURED");
 				execute.shutdownNow();
@@ -276,7 +297,10 @@ class Graph {
 			}
 		}
 		execute.shutdown();
-		System.out.println("DIAMETER : " +diameter );
+		
+		double APL = sommeOfallVertices /(double) nbVertices;
+		
+		System.out.println("DIAMETER : " +diameter +" | Average path length : "+APL);
 	}
 	
 	
