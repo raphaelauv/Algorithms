@@ -2,9 +2,12 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
@@ -13,38 +16,42 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/*
-class Tuple<X, Y> { 
-	  public final X x; 
-	  public final Y y; 
-	  public Tuple(X x, Y y) { 
-	    this.x = x; 
-	    this.y = y; 
-	  } 
-}
-*/
-
 class Node {
 	
 	int id;
-	//Object locker; //not necessary with the AtomicInteger
-	AtomicInteger nbInsideTriangle;
-	
 	Collection<Node> neighbours;
+	
+	//Object locker; 								//not necessary with the AtomicInteger
+	AtomicInteger nbInsideTriangle;					//only for averageClusteringCoefficient
+	private AtomicInteger diameter;							//only for PFS
 	
 	public Node(int id) {
 		this.id = id;
-		this.neighbours = new LinkedHashSet<>(); //better for the parallele version without marqued technique
-		//this.neighbours = new LinkedList<>(); //better for the sequential version with marqued technique
-		
-		this.nbInsideTriangle =  new AtomicInteger(0);
+		this.neighbours = new LinkedHashSet<>(); 	//better for the parallele version without marqued technique
+
 		//this.locker = new Object();
+		this.nbInsideTriangle =  new AtomicInteger(0);
 	}
 	
 	public void insertEdge(Node neighbour) {
 		this.neighbours.add(neighbour);
 	}
 	
+	public AtomicInteger getDiameter() {
+		return this.diameter;
+	}
+	
+	public void setDiameterOfNode(int val) {
+		if(this.diameter==null) {
+			this.diameter = new AtomicInteger(val);
+		}else {
+			this.diameter.set(val);
+		}
+	}
+	
+	/*
+	 * only for averageClusteringCoefficient
+	 */
 	public static void incrementNbTriangle(Node node0, Node node1, Node node2) {
 		/*
 		synchronized (node0.locker) {node0.nbInsideTriangle++;}
@@ -57,14 +64,124 @@ class Node {
 	}
 }
 
-class FindNbTrianglesOfX_WithOptimisation implements Callable<Integer> {
+/*
+ * Diameter job
+ */
+class PFS_OfX implements Callable<Integer> {
+	
+	Node actualNode;
+	boolean all_AlreadyCalculated;		//all the neighbour alredy have their diameter calculated
+	boolean allTheSame=false;			//all the neighbour have the same diameter
+	
+	int maxNeighbourDiameter=0;
+	int minNeighbourDiameter=0;
+	public PFS_OfX(Node node) {
+		this.actualNode=node;
+	}
+	
+	public void findMaxAndMinDiameterOfNeighbour() {
+		
+		AtomicInteger tmpDiameter;
+		int valTmpDiameter;
+		
+		boolean first=true;
+		
+		all_AlreadyCalculated=true;
+		for (Node aNeighbour : actualNode.neighbours) {
+			tmpDiameter=aNeighbour.getDiameter();
+			if(tmpDiameter!=null) {
+				valTmpDiameter=tmpDiameter.get();
+				if(first) {
+					minNeighbourDiameter=valTmpDiameter;
+					maxNeighbourDiameter=valTmpDiameter;
+					first=false;
+					continue;
+				}
+				
+				if(valTmpDiameter>maxNeighbourDiameter) {
+					if(!first) {
+						allTheSame=false;
+					}
+					maxNeighbourDiameter=valTmpDiameter;
+				}else if(valTmpDiameter<minNeighbourDiameter) {
+					if(!first) {
+						allTheSame=false;
+					}
+					minNeighbourDiameter=valTmpDiameter;
+				}
+				
+			}else {
+				all_AlreadyCalculated=false;
+				allTheSame=false;
+			}
+		}
+		
+	}
+
+	
+	public Integer call() throws Exception {
+		
+		findMaxAndMinDiameterOfNeighbour();
+		
+		//All my neighbour(s) have the same Degree , so i have the same degree
+		if(allTheSame) {
+			return maxNeighbourDiameter;
+		}
+
+		//I only have 1 neighbour with an already diameter calculated
+		if(actualNode.neighbours.size()==1 && maxNeighbourDiameter!=0) {
+			actualNode.setDiameterOfNode(maxNeighbourDiameter+1);
+			return maxNeighbourDiameter+1;
+		}
+		
+		
+		Queue<Node> stack = new LinkedList<>();
+		Node tmpNode=actualNode;
+		stack.add(tmpNode);
+
+		Integer actualDistance =0;
+		int maxDistance_of_D = 0;
+		HashMap<Node, Integer> nodesAlreadySeen= new HashMap<>();
+		
+		nodesAlreadySeen.put(tmpNode, actualDistance);
+
+		
+		while (!stack.isEmpty()) {
+			
+			tmpNode = stack.poll();
+			actualDistance=nodesAlreadySeen.get(tmpNode);
+			if(actualDistance>maxDistance_of_D) {
+				maxDistance_of_D++;
+			}
+			
+			for (Node aNeighbour : tmpNode.neighbours) {
+
+				actualDistance=nodesAlreadySeen.get(aNeighbour);
+				if(actualDistance==null) {
+					nodesAlreadySeen.put(aNeighbour, maxDistance_of_D+1);
+					stack.add(aNeighbour);
+				}
+			}
+		}
+		System.out.println("node "+actualNode.id+" : "+maxDistance_of_D);
+		
+		actualNode.setDiameterOfNode(maxDistance_of_D);
+		return maxDistance_of_D;
+	}
+}
+
+
+/*
+ * Cluster coefficient job
+ */
+class FindNbTriangles_OfX_WithOptimisation implements Callable<Integer> {
 
 	private Node node;
-	boolean enPlace;
+	boolean isAverageClusterMode;
 	
-	public FindNbTrianglesOfX_WithOptimisation(Node node,boolean enPlace) {
+	public FindNbTriangles_OfX_WithOptimisation(Node node,boolean isAverageClusterMode) {
 		this.node = node;
-		this.enPlace=enPlace;
+		this.isAverageClusterMode=isAverageClusterMode;
 	}
 
 	public Integer call() throws Exception {
@@ -102,7 +219,7 @@ class FindNbTrianglesOfX_WithOptimisation implements Callable<Integer> {
 				}
 				if(node.neighbours.contains(aNN)) {
 					nb++;
-					if(enPlace) {
+					if(isAverageClusterMode) {
 						Node.incrementNbTriangle(this.node, aNeighbour, aNN);
 					}
 				}
@@ -112,32 +229,6 @@ class FindNbTrianglesOfX_WithOptimisation implements Callable<Integer> {
 		return nb /2;//because we count each triangle in the two ways possible
 	}
 }
-
-/*
-class FindNbTiranglesAndDegreeOfX implements Callable<Tuple<Integer,Integer>> {
-	
-	private Node2 node;
-	public FindNbTiranglesAndDegreeOfX(Node2 node) {
-		this.node = node;
-	}
-
-	public Tuple<Integer,Integer> call() throws Exception {
-		int nb = 0;
-		for (Node2 aNeighbour : node.neighbours) {
-			for (Node2 aNN : aNeighbour.neighbours) {
-				if(aNN.id==this.node.id) {
-					continue;//do not look for myself
-				}
-				if(node.neighbours.contains(aNN)) {
-					nb++;
-				}
-			}
-		}
-		return new Tuple<Integer, Integer>(nb/2, node.neighbours.size());
-	}
-}
-*/
-
 
 class Graph {
 	
@@ -156,29 +247,59 @@ class Graph {
 		}
 	}
 
-	public void averageClusteringCoefficient() {
-		
+	
+	public void diameterOfGraph() {
 		
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
 		CompletionService<Integer> completion = new ExecutorCompletionService<>(execute);
+
+		int nbTaskCreate = 0;
+		Iterator<Node> itNodes = this.mapNodes.values().iterator();
+		while (itNodes.hasNext()) {
+			completion.submit(new PFS_OfX(itNodes.next()));
+			nbTaskCreate++;
+		}
+
+		int diameter = 0;
+		int acutalDistance =0;
+		for (int i = 0; i < nbTaskCreate; i++) {
+			try {
+				acutalDistance=completion.take().get();
+				if(acutalDistance>diameter) {
+					diameter=acutalDistance;
+				}
+			} catch (InterruptedException | ExecutionException e) {
+				System.out.println("ERROR OCCURED");
+				execute.shutdownNow();
+				return;
+			}
+		}
+		execute.shutdown();
+		System.out.println("DIAMETER : " +diameter );
+	}
+	
+	
+	
+	public void averageClusteringCoefficient() {
 		
-		int nbTaskCreate=0;
+		int corePoolSize = Runtime.getRuntime().availableProcessors();
+		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
+		CompletionService<Integer> completion = new ExecutorCompletionService<>(execute);
+
+		int nbTaskCreate = 0;
 		Iterator<Node> itNodes = this.mapNodes.values().iterator();
 		
-		while(itNodes.hasNext()) {
-			
-			completion.submit(new FindNbTrianglesOfX_WithOptimisation(itNodes.next(),true));
-			//completion.submit(new FindNbTiranglesAndDegreeOfX(itNodes.next()));
+		while (itNodes.hasNext()) {
+			completion.submit(new FindNbTriangles_OfX_WithOptimisation(itNodes.next(), true));
 			nbTaskCreate++;
 		}
 
 		int nbTri_X = 0;
-		int degree_X=0;
+		int degree_X = 0;
 		double sum_cluL_X = 0;
-
 		
-		for(int i =0;i<nbTaskCreate;i++) {
+		for (int i = 0; i < nbTaskCreate; i++) {
 			try {
 				completion.take().get();
 			} catch (InterruptedException | ExecutionException e) {
@@ -190,50 +311,20 @@ class Graph {
 		execute.shutdown();
 		
 		itNodes = this.mapNodes.values().iterator();
-		Node actualNode=null;
-		while(itNodes.hasNext()) {
-			actualNode=itNodes.next();
-			nbTri_X=actualNode.nbInsideTriangle.get()/2;
-			degree_X=actualNode.neighbours.size();
-			if(degree_X <2) {
+		Node actualNode = null;
+		while (itNodes.hasNext()) {
+			actualNode = itNodes.next();
+			nbTri_X = actualNode.nbInsideTriangle.get() / 2;
+			degree_X = actualNode.neighbours.size();
+			if (degree_X < 2) {
 				continue;
 			}
-			sum_cluL_X += (2 * nbTri_X ) / (double)  (degree_X * (degree_X-1));
+			sum_cluL_X += (2 * nbTri_X) / (double) (degree_X * (degree_X - 1));
 			
 		}
-		
-		/*
-		Tuple<Integer,Integer> result;
-		for(int i =0;i<nbTaskCreate;i++) {
-			try {
-				
-				
-				result = completion.take().get();
-				nbTri_X=result.x;
-				degree_X=result.y;
-							
-				if(degree_X <2) {
-					continue;
-				}
-
-				sum_cluL_X += (2 * nbTri_X ) / (double)  (degree_X * (degree_X-1));
-				
-				
-			} catch (InterruptedException | ExecutionException e) {
-				System.out.println("ERROR OCCURED");
-				execute.shutdownNow();
-				return;
-			}
-		}
-		execute.shutdown();
-		*/
-		
-		double oneOnN= 1 / (double)(this.mapNodes.size());
-	
-		double cluL_G = oneOnN  *sum_cluL_X ;
-		
-		System.out.println("CLU_L : "+cluL_G );
-		
+		double oneOnN = 1 / (double) (this.mapNodes.size());
+		double cluL_G = oneOnN * sum_cluL_X;
+		System.out.println("CLU_L : " + cluL_G);
 	}
 	
 	public void globalClusteringCoefficient() {
@@ -246,7 +337,7 @@ class Graph {
 		int degreeTmpNode;
 		long nbV = 0;
 		int nbTri = 0;
-		int nbTaskToManage=0;
+		int nbTaskToManage = 0;
 		
 		/*
 		int nbNodeToDo = this.mapNodes.values().size();
@@ -257,13 +348,13 @@ class Graph {
 		*/
 		
 		Iterator<Node> itNodes = this.mapNodes.values().iterator();
-		while(itNodes.hasNext()) {
-			tmpNode=itNodes.next();
-			degreeTmpNode=tmpNode.neighbours.size();
-			if(degreeTmpNode>0){
-				nbV+= (degreeTmpNode*(degreeTmpNode-1) /2  );
+		while (itNodes.hasNext()) {
+			tmpNode = itNodes.next();
+			degreeTmpNode = tmpNode.neighbours.size();
+			if (degreeTmpNode > 0) {
+				nbV += (degreeTmpNode * (degreeTmpNode - 1) / 2);
 			}
-			completion.submit(new FindNbTrianglesOfX_WithOptimisation(tmpNode,false));
+			completion.submit(new FindNbTriangles_OfX_WithOptimisation(tmpNode,false));
 			nbTaskToManage++;
 			/*
 			 * unnecessary memory optimisation -> to limit the number of futurs inside CompletionService
@@ -309,16 +400,16 @@ class Graph {
 		}
 		
 		execute.shutdown();
-		//nbTri/=3; //without the optimisation with ids in findNbTriangles
+		
 		double cluGraph = (3 * nbTri) /(double)nbV;
 		System.out.println("nb Tri : "+nbTri+" | nb V : "+nbV+" | CLU_G : "+cluGraph );
 		
 	}
 
+
 }
 
-
-public class GlobalClusteringCoefficient {
+final class ManageInput{
 	
 	public static boolean parseAndFillGraph2(Graph graph, BufferedReader file) throws IOException {
 		String line = "";
@@ -380,14 +471,18 @@ public class GlobalClusteringCoefficient {
 		System.out.println("il manque arguments");
         System.out.println("Pour exécuter : java Exo2 [nom_du_fichier]");
 	}
+
+}
+
+public class GlobalClusteringCoefficient {
 	
 	public static void main(String[] args) {
 		if (args.length < 1) {
-			missingArgs();
+			ManageInput.missingArgs();
 			return;
 		}
 		
-		Graph myGraph = creatGraph(args[0]);
+		Graph myGraph = ManageInput.creatGraph(args[0]);
 		if(myGraph==null) {return;}
 		myGraph.globalClusteringCoefficient();
         	
