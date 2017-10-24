@@ -14,40 +14,39 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-
-class Truple<X, Y, Z> {
-	public final X diameter;
-	public final Y sommeOfallVertices;
-	public final Z nbVertices;
-	public Truple(X x, Y y, Z z) {
-		this.diameter = x;
-		this.sommeOfallVertices = y;
-		this.nbVertices = z;
-	}
-}
+import java.util.concurrent.atomic.LongAdder;
 
 class Node {
 	
-	int id;
+	final int id;
 	Collection<Node> neighbours;
-	
-	//Object locker; 								//not necessary with the AtomicInteger
-	AtomicInteger nbInsideTriangle;					//only for averageClusteringCoefficient
-	private AtomicInteger diameter;					//only for PFS
+	private LongAdder nbInsideTriangle;						//only for averageClusteringCoefficient
+	//private AtomicInteger diameter;						//only for BFS
 	
 	public Node(int id) {
 		this.id = id;
 		this.neighbours = new LinkedHashSet<>(); 	//better for the parallele version without marqued technique
-
-		//this.locker = new Object();
-		this.nbInsideTriangle =  new AtomicInteger(0);
+		this.nbInsideTriangle = new LongAdder();
 	}
+
 	
 	public void insertEdge(Node neighbour) {
 		this.neighbours.add(neighbour);
 	}
 	
+	/*
+	 * only for averageClusteringCoefficient
+	 */
+	public static void incrementNbTriangle(Node node0, Node node1, Node node2) {
+		node0.nbInsideTriangle.increment();
+		node1.nbInsideTriangle.increment();
+		node2.nbInsideTriangle.increment();
+	}
+	public int getNbTriangle() {
+		return ((int) (this.nbInsideTriangle.sum())) / 2;
+	}
+	
+	/*
 	public AtomicInteger getDiameter() {
 		return this.diameter;
 	}
@@ -59,37 +58,41 @@ class Node {
 			this.diameter.set(val);
 		}
 	}
-	
-	/*
-	 * only for averageClusteringCoefficient
-	 */
-	public static void incrementNbTriangle(Node node0, Node node1, Node node2) {
-		/*
-		synchronized (node0.locker) {node0.nbInsideTriangle++;}
-		synchronized (node1.locker) {node1.nbInsideTriangle++;}
-		synchronized (node2.locker) {node2.nbInsideTriangle++;}
-		*/
-		node0.nbInsideTriangle.incrementAndGet();
-		node1.nbInsideTriangle.incrementAndGet();
-		node2.nbInsideTriangle.incrementAndGet();
+	*/
+
+}
+
+
+class ResultBFS {
+	public final int diameter;
+	public final int sommeOfallVertices;
+	public final int nbVertices;
+	public ResultBFS(int x, int y, int z) {
+		this.diameter = x;
+		this.sommeOfallVertices = y;
+		this.nbVertices = z;
 	}
 }
 
 /*
  * Diameter job
  */
-class BFS_OfX implements Callable<Truple<Integer,Integer,Integer>> {
+class BFS_OfX implements Callable<ResultBFS> {
 	
 	Node actualNode;
+	
+	/*
 	boolean all_AlreadyCalculated;		//all the neighbour alredy have their diameter calculated
 	boolean allTheSame=false;			//all the neighbour have the same diameter
 	
 	int maxNeighbourDiameter=0;
 	int minNeighbourDiameter=0;
+	*/
 	public BFS_OfX(Node node) {
 		this.actualNode=node;
 	}
 	
+	/*
 	public void findMaxAndMinDiameterOfNeighbour() {
 		
 		AtomicInteger tmpDiameter;
@@ -128,9 +131,9 @@ class BFS_OfX implements Callable<Truple<Integer,Integer,Integer>> {
 		}
 		
 	}
-
+	*/
 	
-	public Truple<Integer,Integer,Integer> call() throws Exception {
+	public ResultBFS call() throws Exception {
 		
 		/*
 		findMaxAndMinDiameterOfNeighbour();
@@ -157,7 +160,6 @@ class BFS_OfX implements Callable<Truple<Integer,Integer,Integer>> {
 		Integer actualDistance =0;
 		int maxDistance_of_D = 0;
 		HashMap<Node, Integer> nodesAlreadySeen= new HashMap<>();
-		
 		nodesAlreadySeen.put(tmpNode, actualDistance);
 
 		
@@ -180,9 +182,9 @@ class BFS_OfX implements Callable<Truple<Integer,Integer,Integer>> {
 		}
 		//System.out.println("node "+actualNode.id+" : "+maxDistance_of_D);
 		
-		actualNode.setDiameterOfNode(maxDistance_of_D);
-		//return maxDistance_of_D;
-		return new Truple<Integer,Integer,Integer>(maxDistance_of_D,sommeOfallVertices,nbVertices);
+		//actualNode.setDiameterOfNode(maxDistance_of_D);
+		
+		return new ResultBFS(maxDistance_of_D,sommeOfallVertices,nbVertices);
 	}
 }
 
@@ -268,7 +270,7 @@ class Graph {
 		
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
-		CompletionService<Truple<Integer,Integer,Integer>> completion = new ExecutorCompletionService<>(execute);
+		CompletionService<ResultBFS> completion = new ExecutorCompletionService<>(execute);
 
 		int nbTaskCreate = 0;
 		Iterator<Node> itNodes = this.mapNodes.values().iterator();
@@ -281,7 +283,7 @@ class Graph {
 		long nbVertices=0;
 		long sommeOfallVertices=0;
 		//int acutalDistance =0;
-		Truple<Integer,Integer,Integer> result=null;
+		ResultBFS result=null;
 		for (int i = 0; i < nbTaskCreate; i++) {
 			try {
 				result=completion.take().get();
@@ -338,7 +340,7 @@ class Graph {
 		Node actualNode = null;
 		while (itNodes.hasNext()) {
 			actualNode = itNodes.next();
-			nbTri_X = actualNode.nbInsideTriangle.get() / 2;
+			nbTri_X = actualNode.getNbTriangle();
 			degree_X = actualNode.neighbours.size();
 			if (degree_X < 2) {
 				continue;

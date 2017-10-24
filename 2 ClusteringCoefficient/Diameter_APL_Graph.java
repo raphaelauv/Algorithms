@@ -1,4 +1,3 @@
-
 public class Diameter_APL_Graph {
 
 	public static void main(String[] args) {
@@ -6,10 +5,8 @@ public class Diameter_APL_Graph {
 			ManageInput.missingArgs();
 			return;
 		}
-		
 		Graph myGraph = ManageInput.creatGraph(args[0]);
 		if(myGraph==null) {return;}
-		myGraph.diameter_and_Averagepathlength_ofGraph();
-		
+		myGraph.diameter_and_Averagepathlength_ofGraph();		
 	}
 }
