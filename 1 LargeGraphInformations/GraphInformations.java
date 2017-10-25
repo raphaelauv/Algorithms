@@ -3,7 +3,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 
-public class Exo1 {
+public class GraphInformations {
 
 	int nbNodes;
 	int maxIdFind;
@@ -16,7 +16,7 @@ public class Exo1 {
 				+ nbEdges;
 	}
 
-	public static void parseFile(BufferedReader br, Exo1 answers, boolean oriented) throws IOException {
+	public static void parseFile(BufferedReader br, GraphInformations answers, boolean oriented) throws IOException {
 
 		String line = "";
 		Long nbLine = 0l;
@@ -92,11 +92,11 @@ public class Exo1 {
 
 	public static void main(String[] args) {
 
-		Exo1 answers = new Exo1();
+		GraphInformations answers = new GraphInformations();
 
 		if (args.length < 1) {
 			System.out.println("il manque arguments");
-			System.out.println("Pour exécuter java Exo1 [nom_du_fichier] [-o] ");
+			System.out.println("Pour exécuter java GraphInformations [nom_du_fichier] [-o] ");
 
 			return;
 		}

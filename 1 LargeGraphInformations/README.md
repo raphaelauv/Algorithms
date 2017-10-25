@@ -1,11 +1,6 @@
-
 # TP1 Large Graph Informations
 
-
 M2 INFORMATIQUE PARIS DIDEROT - 2017/2018
-AUVERT RAPHAEL
-LABADENS LUCAS
-
 
 ### PRECISIONS
 
@@ -16,12 +11,11 @@ LABADENS LUCAS
 		3 3
 	(sinon impossible d'avoir un sommet seul sans voisins avec le format imposé par le sujet !!)
 
-
-
 WIkipedia : (https://fr.wikipedia.org/wiki/Graphe_connexe)
+
 	Pour un graphe orienté, on parle de connexité si en oubliant l'orientation des arêtes, le graphe est connexe
 	Donc nous considererons que :
-		si il existe un chemin depuis U a V et un chemin depuis K a V alors K et U sont dans la meme CC
+	si il existe un chemin depuis U a V et un chemin depuis K a V alors K et U sont dans la meme CC
 
 
 
@@ -32,10 +26,10 @@ WIkipedia : (https://fr.wikipedia.org/wiki/Graphe_connexe)
 
 ### EXECUTION
 
-	java Exo1 [FileName] [-o]
+	java GraphInformations [FileName] [-o]
 		-o: for an oriented graph
 
-	java Exo2 [FileName] [sommet_D] [-o] [-v] [-f]
+	java GraphBFS [FileName] [sommet_D] [-o] [-v] [-f]
 		-o: for an oriented graph
 		-f: pour un fichier de sortie avec la liste des sommes dans l'ordre du parcours en largeur depuis le sommet D
 		-v: verbose mode
@@ -131,5 +125,3 @@ Chaque sommet stock une liste de ces voisins accessibles
 						Sv.CC.pere = CC*
 
 				sinon lui associé la CC*
-
-

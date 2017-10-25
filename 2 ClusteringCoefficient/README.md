@@ -5,11 +5,11 @@ AUVERT RAPHAEL
 
 ## for the two ClusteringCoefficient : Basic-MT-Skip
 
-> MULTITHREADING version : Enumerating over Neighbor Pairs WITH Delegating Low-Degree Vertices AND Skipping Vertices with d(v) < 2
+> MULTITHREADING (parallel) version : Enumerating over Neighbor Pairs WITH Delegating Low-Degree Vertices AND Skipping Vertices with d(v) < 2
 
-## for the diameter and Average path length : BFS-MT-Skip
+## for the diameter and Average path length : BFS/APL-MT
 
-> MULTITHREADING version : Calculate BFS on all Nodes
+> MULTITHREADING (parallel) version : Calculate BFS on all Nodes
 
 ### 1. PRECISIONS
 	
@@ -38,42 +38,55 @@ AUVERT RAPHAEL
 
 ##### 4.1.1 Clustering (Global and Local)
 
-	Worst case :
-		
+	
+	The complexity is the same for the both algorithms , only 2* nb(tri) will be calculated
+	with p processors
+	Worst case (Complete graph) :
+		O(  ( m^(3/2) )/p  )
+		-
 	  	m : number of edges
-	  	n : number of nodes
-	  	w(n) complexité de UNION-FIND optimal
-	 
-	Amortized case :
-		
 
 ##### 4.1.1 Diameter and APL
 
-	Worst case :
-		
+	The complexity is the same for the both algorithms and can be calculated at the same time
+	with p processors
+	Worst case (Complete graph) :
+		O( (m*n) /p )
+		-
 	  	m : number of edges
 	  	n : number of nodes
-	  	w(n) complexité de UNION-FIND optimal
-	 
-	Amortized case :
-
-
 
 #### 4.2 SPACE COMPLEXITY
 	
 ##### 4.2.1 Clustering (Global and Local)
+	
+	with p processors
+	Worst case (Complete graph) :
+		hs(n) + hs(2*m)
+		-
+		hs : HashSize coeff multiplicator , maximum 2
 
 
 ##### 4.2.1 Diameter and APL
-
+	
+	with p processors
+	Worst case (Complete graph) :
+		hs(n) + hs(2*m) + p*hs(m)
+		-
+		hs : HashSize coeff multiplicator , maximum 2
 
 
 #### 4.3 IMPLEMENTATION IN JAVA
 
+Toute les implementation passe a l'echelle , toutes les operations concurrentes sont atomiques et avec des struck lock-free
+et sont les plus optimisé pour les cas de contention.
 
 Un seul et unique parcout du fichier
 Une implementation la plus legere possible en memoire est proposé avec comme contraine :
 Nous l'avons adapté pour repondre au pire cas ( quand il y a enormement de trous d'id dans le graph avec un idMax trés grand , afin de ne pas avoir une complexcité en memoire qui puisse explosé )
+
+une pool de job pour maximisé la parallelisation
+une pool de struck pour minimusé les besoins en memoire
 
 La structure de donnée est une :
 

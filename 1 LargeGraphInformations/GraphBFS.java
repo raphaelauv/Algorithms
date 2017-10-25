@@ -243,7 +243,7 @@ class Graph {
 	}
 }
 
-public class Exo2 {
+public class GraphBFS {
 
 	public static boolean parseAndFillGraph(Graph graph, BufferedReader file) throws IOException {
 		String line = "";
@@ -311,7 +311,7 @@ public class Exo2 {
         
 		if (args.length < 2) {
 			System.out.println("il manque arguments");
-            System.out.println("Pour exécuter java Exo2 [nom_du_fichier] [sommet_D] [-o] [-v] [-f]");
+            System.out.println("Pour exécuter java GraphBFS [nom_du_fichier] [sommet_D] [-o] [-v] [-f]");
 			return;
 		}
 		
@@ -340,7 +340,7 @@ public class Exo2 {
             }
             
             if(file) {
-            	Path file2 = Paths.get("./"+args[0]+"-output_exo2");
+            	Path file2 = Paths.get("./"+args[0]+"-output_GraphBFS");
                 out = new BufferedOutputStream(Files.newOutputStream(file2, CREATE, TRUNCATE_EXISTING));
             }
             
