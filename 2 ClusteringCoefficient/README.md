@@ -1,7 +1,7 @@
 M2 INFORMATIQUE PARIS DIDEROT - 2017/2018
 AUVERT RAPHAEL
 
-# TP2 Clustering Coefficient (Global and Local), Diameter , All Pairs Shortest Path (APSP) for Average path length (APL)
+# TP2 Clustering Coefficient (Global and Local) , Diameter and Average path length (APL) with All Pairs Shortest Path (APSP)
 
 ## for the two ClusteringCoefficient : Basic-MT-Skip
 
@@ -12,7 +12,8 @@ AUVERT RAPHAEL
 > MULTITHREADING version : Calculate BFS on all Nodes
 
 ### 1. PRECISIONS
-
+	
+	DATA FROM -> https://snap.stanford.edu/data/
 	-un sommet pour s'acceder lui meme doit definir ( par exemple pour le sommet 3) : 3 3
 	(sinon impossible d'avoir un sommet seul sans voisins avec le format imposé par le sujet !!)
 
@@ -27,7 +28,7 @@ AUVERT RAPHAEL
 
 	java AverageClusteringCoefficient [FileName]
 
-	java DiameterGraph [FileName]
+	java Diameter_APL_Graph [FileName]
 
 ### 4. EXPLICATION
 
@@ -72,7 +73,6 @@ AUVERT RAPHAEL
 
 Un seul et unique parcout du fichier
 Une implementation la plus legere possible en memoire est proposé avec comme contraine :
-
 Nous l'avons adapté pour repondre au pire cas ( quand il y a enormement de trous d'id dans le graph avec un idMax trés grand , afin de ne pas avoir une complexcité en memoire qui puisse explosé )
 
 La structure de donnée est une :

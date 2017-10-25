@@ -6,10 +6,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -21,11 +20,10 @@ class Node {
 	final int id;
 	Collection<Node> neighbours;
 	private LongAdder nbInsideTriangle;						//only for averageClusteringCoefficient
-	//private AtomicInteger diameter;						//only for BFS
 	
 	public Node(int id) {
 		this.id = id;
-		this.neighbours = new LinkedHashSet<>(); 	//better for the parallele version without marqued technique
+		this.neighbours = new LinkedHashSet<>(); 			//better than linkedList for the parallele version without marqued technique
 		this.nbInsideTriangle = new LongAdder();
 	}
 
@@ -45,148 +43,35 @@ class Node {
 	public int getNbTriangle() {
 		return ((int) (this.nbInsideTriangle.sum())) / 2;
 	}
-	
-	/*
-	public AtomicInteger getDiameter() {
-		return this.diameter;
+
+}
+
+
+class FixedDataStruckPool{
+	int nbStruck;
+	int nbCreated;
+	ConcurrentLinkedDeque<HashMap<Node, Integer>> listStruck;
+	 
+	public FixedDataStruckPool(int nbStruck) {
+		this.nbStruck = nbStruck+4;
+		this.nbCreated = 0;
+		this.listStruck = new ConcurrentLinkedDeque<>();
 	}
-	
-	public void setDiameterOfNode(int val) {
-		if(this.diameter==null) {
-			this.diameter = new AtomicInteger(val);
+	public HashMap<Node, Integer> getStruck() {
+		if(nbCreated<nbStruck) {
+			HashMap<Node, Integer> struck = new HashMap<>();
+			nbCreated++;
+			return struck;
 		}else {
-			this.diameter.set(val);
+			return listStruck.poll();
 		}
 	}
-	*/
-
-}
-
-
-class ResultBFS {
-	public final int diameter;
-	public final int sommeOfallVertices;
-	public final int nbVertices;
-	public ResultBFS(int x, int y, int z) {
-		this.diameter = x;
-		this.sommeOfallVertices = y;
-		this.nbVertices = z;
+	public void realease(HashMap<Node, Integer> struck) {
+		struck.clear();
+		listStruck.addFirst(struck);
 	}
 }
 
-/*
- * Diameter job
- */
-class BFS_OfX implements Callable<ResultBFS> {
-	
-	Node actualNode;
-	
-	/*
-	boolean all_AlreadyCalculated;		//all the neighbour alredy have their diameter calculated
-	boolean allTheSame=false;			//all the neighbour have the same diameter
-	
-	int maxNeighbourDiameter=0;
-	int minNeighbourDiameter=0;
-	*/
-	public BFS_OfX(Node node) {
-		this.actualNode=node;
-	}
-	
-	/*
-	public void findMaxAndMinDiameterOfNeighbour() {
-		
-		AtomicInteger tmpDiameter;
-		int valTmpDiameter;
-		
-		boolean first=true;
-		
-		all_AlreadyCalculated=true;
-		for (Node aNeighbour : actualNode.neighbours) {
-			tmpDiameter=aNeighbour.getDiameter();
-			if(tmpDiameter!=null) {
-				valTmpDiameter=tmpDiameter.get();
-				if(first) {
-					minNeighbourDiameter=valTmpDiameter;
-					maxNeighbourDiameter=valTmpDiameter;
-					first=false;
-					continue;
-				}
-				
-				if(valTmpDiameter>maxNeighbourDiameter) {
-					if(!first) {
-						allTheSame=false;
-					}
-					maxNeighbourDiameter=valTmpDiameter;
-				}else if(valTmpDiameter<minNeighbourDiameter) {
-					if(!first) {
-						allTheSame=false;
-					}
-					minNeighbourDiameter=valTmpDiameter;
-				}
-				
-			}else {
-				all_AlreadyCalculated=false;
-				allTheSame=false;
-			}
-		}
-		
-	}
-	*/
-	
-	public ResultBFS call() throws Exception {
-		
-		/*
-		findMaxAndMinDiameterOfNeighbour();
-		
-		//All my neighbour(s) have the same Degree , so i have the same degree
-		if(allTheSame) {
-			return maxNeighbourDiameter;
-		}
-
-		//I only have 1 neighbour with an already diameter calculated
-		if(actualNode.neighbours.size()==1 && maxNeighbourDiameter!=0) {
-			actualNode.setDiameterOfNode(maxNeighbourDiameter+1);
-			return maxNeighbourDiameter+1;
-		}
-		*/
-		
-		int nbVertices=0;
-		int sommeOfallVertices=0;
-		
-		Queue<Node> stack = new LinkedList<>();
-		Node tmpNode=actualNode;
-		stack.add(tmpNode);
-
-		Integer actualDistance =0;
-		int maxDistance_of_D = 0;
-		HashMap<Node, Integer> nodesAlreadySeen= new HashMap<>();
-		nodesAlreadySeen.put(tmpNode, actualDistance);
-
-		
-		while (!stack.isEmpty()) {
-			tmpNode = stack.poll();
-			actualDistance=nodesAlreadySeen.get(tmpNode);
-			if(actualDistance>maxDistance_of_D) {
-				maxDistance_of_D++;
-			}
-			
-			for (Node aNeighbour : tmpNode.neighbours) {
-				actualDistance=nodesAlreadySeen.get(aNeighbour);
-				if(actualDistance==null) {
-					nbVertices++;
-					sommeOfallVertices+=maxDistance_of_D+1;
-					nodesAlreadySeen.put(aNeighbour, maxDistance_of_D+1);
-					stack.add(aNeighbour);
-				}
-			}
-		}
-		//System.out.println("node "+actualNode.id+" : "+maxDistance_of_D);
-		
-		//actualNode.setDiameterOfNode(maxDistance_of_D);
-		
-		return new ResultBFS(maxDistance_of_D,sommeOfallVertices,nbVertices);
-	}
-}
 
 
 /*
@@ -264,175 +149,6 @@ class Graph {
 			neighbourNode.insertEdge(actualNode);
 		}
 	}
-
-	
-	public void diameter_and_Averagepathlength_ofGraph() {
-		
-		int corePoolSize = Runtime.getRuntime().availableProcessors();
-		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
-		CompletionService<ResultBFS> completion = new ExecutorCompletionService<>(execute);
-
-		int nbTaskCreate = 0;
-		Iterator<Node> itNodes = this.mapNodes.values().iterator();
-		while (itNodes.hasNext()) {
-			completion.submit(new BFS_OfX(itNodes.next()));
-			nbTaskCreate++;
-		}
-
-		int diameter = 0;
-		long nbVertices=0;
-		long sommeOfallVertices=0;
-		//int acutalDistance =0;
-		ResultBFS result=null;
-		for (int i = 0; i < nbTaskCreate; i++) {
-			try {
-				result=completion.take().get();
-				if(result.diameter>diameter) {
-					diameter=result.diameter;
-				}
-				nbVertices+=result.nbVertices;
-				sommeOfallVertices+=result.sommeOfallVertices;
-			} catch (InterruptedException | ExecutionException e) {
-				System.out.println("ERROR OCCURED");
-				execute.shutdownNow();
-				return;
-			}
-		}
-		execute.shutdown();
-		
-		double APL = sommeOfallVertices /(double) nbVertices;
-		
-		System.out.println("DIAMETER : " +diameter +" | Average path length : "+APL);
-	}
-	
-	
-	
-	public void averageClusteringCoefficient() {
-		
-		int corePoolSize = Runtime.getRuntime().availableProcessors();
-		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
-		CompletionService<Integer> completion = new ExecutorCompletionService<>(execute);
-
-		int nbTaskCreate = 0;
-		Iterator<Node> itNodes = this.mapNodes.values().iterator();
-		
-		while (itNodes.hasNext()) {
-			completion.submit(new FindNbTriangles_OfX_WithOptimisation(itNodes.next(), true));
-			nbTaskCreate++;
-		}
-
-		int nbTri_X = 0;
-		int degree_X = 0;
-		double sum_cluL_X = 0;
-		
-		for (int i = 0; i < nbTaskCreate; i++) {
-			try {
-				completion.take().get();
-			} catch (InterruptedException | ExecutionException e) {
-				System.out.println("ERROR OCCURED");
-				execute.shutdownNow();
-				return;
-			}
-		}
-		execute.shutdown();
-		
-		itNodes = this.mapNodes.values().iterator();
-		Node actualNode = null;
-		while (itNodes.hasNext()) {
-			actualNode = itNodes.next();
-			nbTri_X = actualNode.getNbTriangle();
-			degree_X = actualNode.neighbours.size();
-			if (degree_X < 2) {
-				continue;
-			}
-			sum_cluL_X += (2 * nbTri_X) / (double) (degree_X * (degree_X - 1));
-			
-		}
-		double oneOnN = 1 / (double) (this.mapNodes.size());
-		double cluL_G = oneOnN * sum_cluL_X;
-		System.out.println("CLU_L : " + cluL_G);
-	}
-	
-	public void globalClusteringCoefficient() {
-		
-		int corePoolSize = Runtime.getRuntime().availableProcessors();
-		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
-		CompletionService<Integer> completion = new ExecutorCompletionService<>(execute);
-	
-		Node tmpNode;
-		int degreeTmpNode;
-		long nbV = 0;
-		int nbTri = 0;
-		int nbTaskToManage = 0;
-		
-		/*
-		int nbNodeToDo = this.mapNodes.values().size();
-		int nbResult=0;
-		int pourcent = nbNodeToDo/100;
-		int pourcentPrinted=0;
-		Future<Integer> result;
-		*/
-		
-		Iterator<Node> itNodes = this.mapNodes.values().iterator();
-		while (itNodes.hasNext()) {
-			tmpNode = itNodes.next();
-			degreeTmpNode = tmpNode.neighbours.size();
-			if (degreeTmpNode > 0) {
-				nbV += (degreeTmpNode * (degreeTmpNode - 1) / 2);
-			}
-			completion.submit(new FindNbTriangles_OfX_WithOptimisation(tmpNode,false));
-			nbTaskToManage++;
-			/*
-			 * unnecessary memory optimisation -> to limit the number of futurs inside CompletionService
-			try {
-				 if(nbTaskToManage>20){
-				 	result=completion.take();
-				 }else{
-				 	result=completion.poll();	
-				 }
-				 if(result!=null) {
-					 nbTaskToManage--;
-					 nbTri += result.get();
-					 nbResult++;
-				}
-			} catch (InterruptedException | ExecutionException e) {
-				System.out.println("ERROR OCCURED");
-				execute.shutdownNow();
-			}
-
-			if (nbResult % pourcent == 0) {
-				pourcentPrinted++;
-				//System.out.println(pourcentPrinted + "% done");
-			}
-			*/
-			
-		}
-
-		for(int i =0;i<nbTaskToManage;i++) {
-			try {
-				nbTri += completion.take().get();
-				//nbResult++;
-			} catch (InterruptedException | ExecutionException e) {
-				System.out.println("ERROR OCCURED");
-				execute.shutdownNow();
-				return;
-			}
-			/*
-			if(nbResult% pourcent==0){
-				pourcentPrinted++;
-				System.out.println(pourcentPrinted+"% done");
-			}
-			*/
-		}
-		
-		execute.shutdown();
-		
-		double cluGraph = (3 * nbTri) /(double)nbV;
-		System.out.println("nb Tri : "+nbTri+" | nb V : "+nbV+" | CLU_G : "+cluGraph );
-		
-	}
-
-
 }
 
 final class ManageInput{
@@ -502,6 +218,88 @@ final class ManageInput{
 
 public class GlobalClusteringCoefficient {
 	
+
+	public static void globalClusteringCoefficient(Graph myGraph) {
+		
+		int corePoolSize = Runtime.getRuntime().availableProcessors();
+		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
+		CompletionService<Integer> completion = new ExecutorCompletionService<>(execute);
+	
+		Node tmpNode;
+		int degreeTmpNode;
+		long nbV = 0;
+		int nbTri = 0;
+		int nbTaskToManage = 0;
+		
+		/*
+		int nbNodeToDo = this.mapNodes.values().size();
+		int nbResult=0;
+		int pourcent = nbNodeToDo/100;
+		int pourcentPrinted=0;
+		Future<Integer> result;
+		*/
+		
+		Iterator<Node> itNodes = myGraph.mapNodes.values().iterator();
+		while (itNodes.hasNext()) {
+			tmpNode = itNodes.next();
+			degreeTmpNode = tmpNode.neighbours.size();
+			if (degreeTmpNode > 0) {
+				nbV += (degreeTmpNode * (degreeTmpNode - 1) / 2);
+			}
+			completion.submit(new FindNbTriangles_OfX_WithOptimisation(tmpNode,false));
+			nbTaskToManage++;
+			/*
+			 * unnecessary memory optimisation -> to limit the number of futurs inside CompletionService
+			try {
+				 if(nbTaskToManage>20){
+				 	result=completion.take();
+				 }else{
+				 	result=completion.poll();	
+				 }
+				 if(result!=null) {
+					 nbTaskToManage--;
+					 nbTri += result.get();
+					 nbResult++;
+				}
+			} catch (InterruptedException | ExecutionException e) {
+				System.out.println("ERROR OCCURED");
+				execute.shutdownNow();
+			}
+
+			if (nbResult % pourcent == 0) {
+				pourcentPrinted++;
+				//System.out.println(pourcentPrinted + "% done");
+			}
+			*/
+			
+		}
+
+		for(int i =0;i<nbTaskToManage;i++) {
+			try {
+				nbTri += completion.take().get();
+				//nbResult++;
+			} catch (InterruptedException | ExecutionException e) {
+				System.out.println("ERROR OCCURED");
+				execute.shutdownNow();
+				return;
+			}
+			/*
+			if(nbResult% pourcent==0){
+				pourcentPrinted++;
+				System.out.println(pourcentPrinted+"% done");
+			}
+			*/
+		}
+		
+		execute.shutdown();
+		
+		double cluGraph = (3 * nbTri) /(double)nbV;
+		System.out.println("nb Tri : "+nbTri+" | nb V : "+nbV+" | CLU_G : "+cluGraph );
+		
+	}
+
+	
+	
 	public static void main(String[] args) {
 		if (args.length < 1) {
 			ManageInput.missingArgs();
@@ -510,7 +308,7 @@ public class GlobalClusteringCoefficient {
 		
 		Graph myGraph = ManageInput.creatGraph(args[0]);
 		if(myGraph==null) {return;}
-		myGraph.globalClusteringCoefficient();
+		globalClusteringCoefficient(myGraph);
         	
 	}
 }
