@@ -128,6 +128,9 @@ public class Diameter_APL_Graph {
 		}
 		Graph myGraph = ManageInput.creatGraph(args[0]);
 		if(myGraph==null) {return;}
-		diameter_and_APL_ofGraph(myGraph);		
+		
+		ManageInput.printMemoryStart();
+		diameter_and_APL_ofGraph(myGraph);
+		ManageInput.printMemoryEND();
 	}
 }

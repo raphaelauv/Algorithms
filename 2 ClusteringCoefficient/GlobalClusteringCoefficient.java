@@ -153,6 +153,19 @@ class Graph {
 
 final class ManageInput{
 	
+	private static void printMemory(String msg) {
+		System.out.println(msg+" | Mémoire allouée : " +
+		(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
+	}
+	
+	public static void printMemoryStart() {
+		printMemory("FIN LECTURE FICHIER + CREATION GRAPH");
+	}
+	
+	public static void printMemoryEND() {
+		printMemory("FIN PARCOUR");
+	}
+	
 	public static boolean parseAndFillGraph2(Graph graph, BufferedReader file) throws IOException {
 		String line = "";
 		Long nbLine = 0l;
@@ -308,7 +321,9 @@ public class GlobalClusteringCoefficient {
 		
 		Graph myGraph = ManageInput.creatGraph(args[0]);
 		if(myGraph==null) {return;}
+		ManageInput.printMemoryStart();
 		globalClusteringCoefficient(myGraph);
+		ManageInput.printMemoryEND();
         	
 	}
 }

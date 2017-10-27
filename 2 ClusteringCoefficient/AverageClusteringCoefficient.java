@@ -62,7 +62,10 @@ public class AverageClusteringCoefficient {
 		
 		Graph myGraph = ManageInput.creatGraph(args[0]);
 		if(myGraph==null) {return;}
+		
+		ManageInput.printMemoryStart();
 		averageClusteringCoefficient(myGraph);
+		ManageInput.printMemoryEND();
 		
 	}
 }
