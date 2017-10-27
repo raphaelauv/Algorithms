@@ -42,19 +42,21 @@ AUVERT RAPHAEL
 	The complexity is the same for the both algorithms , only 2* nb(tri) will be calculated
 	with p processors
 	Worst case (Complete graph) :
-		O(  ( m^(3/2) )/p  )
+		O(  ( m^(3/2) )/p  ) + Prefix_sum
 		-
 	  	m : number of edges
+	  	Prefix_sum : is not implemented here , so it cost n
 
 ##### 4.1.1 Diameter and APL
 
 	The complexity is the same for the both algorithms and can be calculated at the same time
 	with p processors
 	Worst case (Complete graph) :
-		O( (m*n) /p )
+		O( (m*n) /p ) + Prefix_sum
 		-
 	  	m : number of edges
 	  	n : number of nodes
+	  	Prefix_sum : it cost logp(n)
 
 #### 4.2 SPACE COMPLEXITY
 	

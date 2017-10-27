@@ -48,9 +48,9 @@ class Node {
 
 
 class FixedDataStruckPool{
-	int nbStruck;
-	int nbCreated;
-	ConcurrentLinkedDeque<HashMap<Node, Integer>> listStruck;
+	private int nbStruck;
+	private int nbCreated;
+	private ConcurrentLinkedDeque<HashMap<Node, Integer>> listStruck;
 	 
 	public FixedDataStruckPool(int nbStruck) {
 		this.nbStruck = nbStruck+4;
@@ -69,6 +69,10 @@ class FixedDataStruckPool{
 	public void realease(HashMap<Node, Integer> struck) {
 		struck.clear();
 		listStruck.addFirst(struck);
+	}
+	
+	public int getNbAvailable() {
+		return listStruck.size();
 	}
 }
 

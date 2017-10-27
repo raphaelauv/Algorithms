@@ -8,36 +8,56 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RecursiveTask;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 class ResultBFS {
-	public final int diameter;
-	public final int sommeOfallVertices;
-	public final int nbVertices;
-	public ResultBFS(int x, int y, int z) {
-		this.diameter = x;
-		this.sommeOfallVertices = y;
-		this.nbVertices = z;
+	public int diameter;
+	public long nbVertices;
+	public long sumOfallVertices;
+	public ResultBFS(int diameter, long nbVertices, long sumOfallVertices) {
+		this.diameter = diameter;
+		this.nbVertices = nbVertices;
+		this.sumOfallVertices = sumOfallVertices;
+	}
+	public String toString() {
+		double APL = sumOfallVertices /((double) nbVertices);
+		return diameter+" "+sumOfallVertices+" "+nbVertices+" | APL :"+APL;
 	}
 }
 
-/*
- * Diameter and APL job
- */
-class BFS_OfX implements Callable<ResultBFS> {
-	
-	Node actualNode;
+class sumResult implements BinaryOperator<ResultBFS>{
+
+	@Override
+	public ResultBFS apply(ResultBFS t, ResultBFS u) {
+		return new ResultBFS((t.diameter>u.diameter) ? t.diameter : u.diameter, t.nbVertices+u.nbVertices,t.sumOfallVertices+u.sumOfallVertices);
+		/*
+		if(t.diameter<u.diameter) {
+			t.diameter=u.diameter;
+		}
+		t.nbVertices+=u.nbVertices;
+		t.sumOfallVertices+=u.sumOfallVertices;
+		
+		return t;
+		*/
+	}
+}
+
+
+class BFS_fonc implements java.util.function.Function<Node,ResultBFS>{
+
 	FixedDataStruckPool dataPoll;
 
-	public BFS_OfX(Node node,FixedDataStruckPool dataPoll) {
-		this.actualNode=node;
+	public BFS_fonc(FixedDataStruckPool dataPoll) {
 		this.dataPoll=dataPoll;
 	}
 	
-
-	public ResultBFS call() throws Exception {
+	public ResultBFS apply(Node actualNode) {
 		
 		int nbVertices=0;
-		int sommeOfallVertices=0;
+		int sumOfallVertices=0;
 		
 		Queue<Node> stack = new LinkedList<>();
 		Node tmpNode=actualNode;
@@ -60,19 +80,90 @@ class BFS_OfX implements Callable<ResultBFS> {
 				actualDistance=nodesAlreadySeen.get(aNeighbour);
 				if(actualDistance==null) {
 					nbVertices++;
-					sommeOfallVertices+=maxDistance_of_D+1;
+					sumOfallVertices+=maxDistance_of_D+1;
 					nodesAlreadySeen.put(aNeighbour, maxDistance_of_D+1);
 					stack.add(aNeighbour);
 				}
 			}
 		}
-		//System.out.println("node "+actualNode.id+" : "+maxDistance_of_D);
-		
-		//actualNode.setDiameterOfNode(maxDistance_of_D);
 		
 		dataPoll.realease(nodesAlreadySeen);
-		return new ResultBFS(maxDistance_of_D,sommeOfallVertices,nbVertices);
+		return new ResultBFS(maxDistance_of_D,nbVertices,sumOfallVertices);
+		
 	}
+	
+}
+
+
+
+/*
+ * Diameter and APL job
+ * 
+ */
+@Deprecated 
+class BFS_OfX implements Callable<ResultBFS>, java.util.function.Function<Node,ResultBFS> {
+	
+	Node actualNode;
+	FixedDataStruckPool dataPool;
+
+	public BFS_OfX(Node node,FixedDataStruckPool dataPool) {
+		this.actualNode=node;
+		this.dataPool=dataPool;
+	}
+	
+	public BFS_OfX(FixedDataStruckPool dataPool) {
+		this.dataPool=dataPool;
+	}
+
+	public ResultBFS apply(Node actualNode) {
+
+		this.actualNode=actualNode;
+		try {
+			return call();
+		} catch (Exception e) {
+			System.out.println("ERREUR");
+			System.out.flush();
+			return null;
+		}
+	}
+	
+	public ResultBFS call() throws Exception {
+		
+		int nbVertices=0;
+		int sumOfallVertices=0;
+		
+		Queue<Node> stack = new LinkedList<>();
+		Node tmpNode=actualNode;
+		stack.add(tmpNode);
+
+		Integer actualDistance =0;
+		int maxDistance_of_D = 0;
+		HashMap<Node, Integer> nodesAlreadySeen= dataPool.getStruck();
+		nodesAlreadySeen.put(tmpNode, actualDistance);
+
+		
+		while (!stack.isEmpty()) {
+			tmpNode = stack.poll();
+			actualDistance=nodesAlreadySeen.get(tmpNode);
+			if(actualDistance>maxDistance_of_D) {
+				maxDistance_of_D++;
+			}
+			
+			for (Node aNeighbour : tmpNode.neighbours) {
+				actualDistance=nodesAlreadySeen.get(aNeighbour);
+				if(actualDistance==null) {
+					nbVertices++;
+					sumOfallVertices+=maxDistance_of_D+1;
+					nodesAlreadySeen.put(aNeighbour, maxDistance_of_D+1);
+					stack.add(aNeighbour);
+				}
+			}
+		}
+		
+		dataPool.realease(nodesAlreadySeen);
+		return new ResultBFS(maxDistance_of_D,nbVertices,sumOfallVertices);
+	}
+
 }
 
 
@@ -82,12 +173,24 @@ public class Diameter_APL_Graph {
 	public static void diameter_and_APL_ofGraph(Graph myGraph) {
 		
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
+		
+		FixedDataStruckPool dataPool=new FixedDataStruckPool(corePoolSize);
+		
+		Stream<Node> stream =myGraph.mapNodes.values().stream().parallel();
+		Stream<ResultBFS> stream2 = stream.map(new BFS_fonc(dataPool));
+		ResultBFS rst=stream2.reduce(new ResultBFS(0, 0, 0),new sumResult());
+		System.out.println(rst);
+			
+	
+		/*
+		
 		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
 		CompletionService<ResultBFS> completion = new ExecutorCompletionService<>(execute);
 
 		
-		FixedDataStruckPool dataPool=new FixedDataStruckPool(corePoolSize);
+		
 		Iterator<Node> itNodes = myGraph.mapNodes.values().iterator();
+		
 		
 		int nbTaskCreate = 0;
 		while (itNodes.hasNext()) {
@@ -97,8 +200,7 @@ public class Diameter_APL_Graph {
 
 		int diameter = 0;
 		long nbVertices=0;
-		long sommeOfallVertices=0;
-		//int acutalDistance =0;
+		long sumOfallVertices=0;
 		ResultBFS result=null;
 		for (int i = 0; i < nbTaskCreate; i++) {
 			try {
@@ -107,7 +209,7 @@ public class Diameter_APL_Graph {
 					diameter=result.diameter;
 				}
 				nbVertices+=result.nbVertices;
-				sommeOfallVertices+=result.sommeOfallVertices;
+				sumOfallVertices+=result.sumOfallVertices;
 			} catch (InterruptedException | ExecutionException e) {
 				System.out.println("ERROR OCCURED");
 				execute.shutdownNow();
@@ -116,9 +218,15 @@ public class Diameter_APL_Graph {
 		}
 		execute.shutdown();
 		
-		double APL = sommeOfallVertices /(double) nbVertices;
+		System.out.println(new ResultBFS(diameter, nbVertices, sumOfallVertices));
+		
+		/*
+		System.out.println("somALL : "+sumOfallVertices+" nbVertices : "+nbVertices);
+		
+		double APL = sumOfallVertices /(double) nbVertices;
 		
 		System.out.println("DIAMETER : " +diameter +" | Average path length : "+APL);
+		*/
 	}
 	
 	public static void main(String[] args) {
@@ -132,5 +240,6 @@ public class Diameter_APL_Graph {
 		ManageInput.printMemoryStart();
 		diameter_and_APL_ofGraph(myGraph);
 		ManageInput.printMemoryEND();
+		
 	}
 }
