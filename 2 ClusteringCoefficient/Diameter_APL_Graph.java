@@ -1,6 +1,7 @@
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
@@ -24,7 +25,7 @@ class ResultBFS {
 	}
 	public String toString() {
 		double APL = sumOfallVertices /((double) nbVertices);
-		return diameter+" "+sumOfallVertices+" "+nbVertices+" | APL :"+APL;
+		return "diameter : "+diameter+" | "+sumOfallVertices+" "+nbVertices+" | APL :"+APL;
 	}
 }
 
@@ -32,8 +33,8 @@ class sumResult implements BinaryOperator<ResultBFS>{
 
 	@Override
 	public ResultBFS apply(ResultBFS t, ResultBFS u) {
-		return new ResultBFS((t.diameter>u.diameter) ? t.diameter : u.diameter, t.nbVertices+u.nbVertices,t.sumOfallVertices+u.sumOfallVertices);
-		/*
+		//return new ResultBFS((t.diameter>u.diameter) ? t.diameter : u.diameter, t.nbVertices+u.nbVertices,t.sumOfallVertices+u.sumOfallVertices);
+		
 		if(t.diameter<u.diameter) {
 			t.diameter=u.diameter;
 		}
@@ -41,16 +42,16 @@ class sumResult implements BinaryOperator<ResultBFS>{
 		t.sumOfallVertices+=u.sumOfallVertices;
 		
 		return t;
-		*/
+		
 	}
 }
 
 
-class BFS_fonc implements java.util.function.Function<Node,ResultBFS>{
+class Let_BFS implements Function<Node,ResultBFS>{
 
 	FixedDataStruckPool dataPoll;
 
-	public BFS_fonc(FixedDataStruckPool dataPoll) {
+	public Let_BFS(FixedDataStruckPool dataPoll) {
 		this.dataPoll=dataPoll;
 	}
 	
@@ -101,7 +102,7 @@ class BFS_fonc implements java.util.function.Function<Node,ResultBFS>{
  * 
  */
 @Deprecated 
-class BFS_OfX implements Callable<ResultBFS>, java.util.function.Function<Node,ResultBFS> {
+class BFS_OfX implements Callable<ResultBFS>,Function<Node,ResultBFS> {
 	
 	Node actualNode;
 	FixedDataStruckPool dataPool;
@@ -173,24 +174,18 @@ public class Diameter_APL_Graph {
 	public static void diameter_and_APL_ofGraph(Graph myGraph) {
 		
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
-		
 		FixedDataStruckPool dataPool=new FixedDataStruckPool(corePoolSize);
 		
 		Stream<Node> stream =myGraph.mapNodes.values().stream().parallel();
-		Stream<ResultBFS> stream2 = stream.map(new BFS_fonc(dataPool));
-		ResultBFS rst=stream2.reduce(new ResultBFS(0, 0, 0),new sumResult());
-		System.out.println(rst);
-			
+		Stream<ResultBFS> stream2 = stream.map(new Let_BFS(dataPool));
+		Optional<ResultBFS> rst=stream2.reduce(new sumResult());
+		System.out.println(rst.get());
 	
-		/*
+		/* Executor version
 		
 		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
 		CompletionService<ResultBFS> completion = new ExecutorCompletionService<>(execute);
-
-		
-		
 		Iterator<Node> itNodes = myGraph.mapNodes.values().iterator();
-		
 		
 		int nbTaskCreate = 0;
 		while (itNodes.hasNext()) {
@@ -217,15 +212,7 @@ public class Diameter_APL_Graph {
 			}
 		}
 		execute.shutdown();
-		
 		System.out.println(new ResultBFS(diameter, nbVertices, sumOfallVertices));
-		
-		/*
-		System.out.println("somALL : "+sumOfallVertices+" nbVertices : "+nbVertices);
-		
-		double APL = sumOfallVertices /(double) nbVertices;
-		
-		System.out.println("DIAMETER : " +diameter +" | Average path length : "+APL);
 		*/
 	}
 	
