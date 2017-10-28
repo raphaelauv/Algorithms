@@ -5,14 +5,62 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.RecursiveTask;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
+class FixedDataStruckPool{
+	private int nbStruck;
+	private int nbHashMapCreated;
+	private int nbStackCreated;
+	
+	private ConcurrentLinkedDeque<HashMap<Node, Integer>> listMap;
+	private ConcurrentLinkedDeque<Queue<Node>> listStack;
+	
+	 
+	public FixedDataStruckPool(int nbStruck) {
+		this.nbStruck = nbStruck+1;
+		this.nbHashMapCreated = 0;
+		this.listMap = new ConcurrentLinkedDeque<>();
+		this.listStack = new ConcurrentLinkedDeque<>();
+	}
+	
+	public HashMap<Node, Integer> getHashMap() {
+		if(nbHashMapCreated<nbStruck) {
+			HashMap<Node, Integer> struck = new HashMap<>();
+			nbHashMapCreated++;
+			return struck;
+		}else {
+			return listMap.poll();
+		}
+	}
+	public Queue<Node> getStack() {
+		if(nbStackCreated<nbStruck) {
+			Queue<Node> struck = new LinkedList<>();
+			nbStackCreated++;
+			return struck;
+		}else {
+			return listStack.poll();
+		}
+	}
+	
+	public void realeaseHashMap(HashMap<Node, Integer> struck) {
+		struck.clear();
+		listMap.addFirst(struck);
+	}
+	
+	public void realeaseStack(Queue<Node>struck) {
+		
+		struck.clear();
+		
+		listStack.addFirst(struck);
+	}
+}
 
 class ResultBFS {
 	public int diameter;
@@ -25,7 +73,7 @@ class ResultBFS {
 	}
 	public String toString() {
 		double APL = sumOfallVertices /((double) nbVertices);
-		return "diameter : "+diameter+" | "+sumOfallVertices+" "+nbVertices+" | APL :"+APL;
+		return "Diameter : "+diameter+" | SumAllVertices : "+sumOfallVertices+" | NbVertices : "+nbVertices+" | APL :"+APL;
 	}
 }
 
@@ -42,17 +90,17 @@ class sumResult implements BinaryOperator<ResultBFS>{
 		t.sumOfallVertices+=u.sumOfallVertices;
 		
 		return t;
-		
+
 	}
 }
 
 
 class Let_BFS implements Function<Node,ResultBFS>{
 
-	FixedDataStruckPool dataPoll;
+	FixedDataStruckPool dataPool;
 
-	public Let_BFS(FixedDataStruckPool dataPoll) {
-		this.dataPoll=dataPoll;
+	public Let_BFS(FixedDataStruckPool dataPool) {
+		this.dataPool=dataPool;
 	}
 	
 	public ResultBFS apply(Node actualNode) {
@@ -60,16 +108,15 @@ class Let_BFS implements Function<Node,ResultBFS>{
 		int nbVertices=0;
 		int sumOfallVertices=0;
 		
-		Queue<Node> stack = new LinkedList<>();
-		Node tmpNode=actualNode;
-		stack.add(tmpNode);
+		Queue<Node> stack = dataPool.getStack();
+		stack.add(actualNode);
 
 		Integer actualDistance =0;
 		int maxDistance_of_D = 0;
-		HashMap<Node, Integer> nodesAlreadySeen= dataPoll.getStruck();
-		nodesAlreadySeen.put(tmpNode, actualDistance);
+		HashMap<Node, Integer> nodesAlreadySeen= dataPool.getHashMap();
+		nodesAlreadySeen.put(actualNode, actualDistance);
 
-		
+		Node tmpNode;
 		while (!stack.isEmpty()) {
 			tmpNode = stack.poll();
 			actualDistance=nodesAlreadySeen.get(tmpNode);
@@ -87,82 +134,25 @@ class Let_BFS implements Function<Node,ResultBFS>{
 				}
 			}
 		}
-		
-		dataPoll.realease(nodesAlreadySeen);
+		dataPool.realeaseStack(stack);
+		dataPool.realeaseHashMap(nodesAlreadySeen);
 		return new ResultBFS(maxDistance_of_D,nbVertices,sumOfallVertices);
-		
 	}
-	
 }
 
 
-
-/*
- * Diameter and APL job
- * 
- */
-@Deprecated 
-class BFS_OfX implements Callable<ResultBFS>,Function<Node,ResultBFS> {
+class BFS implements Callable<ResultBFS> {
 	
 	Node actualNode;
 	FixedDataStruckPool dataPool;
 
-	public BFS_OfX(Node node,FixedDataStruckPool dataPool) {
+	public BFS(Node node,FixedDataStruckPool dataPool) {
 		this.actualNode=node;
 		this.dataPool=dataPool;
 	}
 	
-	public BFS_OfX(FixedDataStruckPool dataPool) {
-		this.dataPool=dataPool;
-	}
-
-	public ResultBFS apply(Node actualNode) {
-
-		this.actualNode=actualNode;
-		try {
-			return call();
-		} catch (Exception e) {
-			System.out.println("ERREUR");
-			System.out.flush();
-			return null;
-		}
-	}
-	
 	public ResultBFS call() throws Exception {
-		
-		int nbVertices=0;
-		int sumOfallVertices=0;
-		
-		Queue<Node> stack = new LinkedList<>();
-		Node tmpNode=actualNode;
-		stack.add(tmpNode);
-
-		Integer actualDistance =0;
-		int maxDistance_of_D = 0;
-		HashMap<Node, Integer> nodesAlreadySeen= dataPool.getStruck();
-		nodesAlreadySeen.put(tmpNode, actualDistance);
-
-		
-		while (!stack.isEmpty()) {
-			tmpNode = stack.poll();
-			actualDistance=nodesAlreadySeen.get(tmpNode);
-			if(actualDistance>maxDistance_of_D) {
-				maxDistance_of_D++;
-			}
-			
-			for (Node aNeighbour : tmpNode.neighbours) {
-				actualDistance=nodesAlreadySeen.get(aNeighbour);
-				if(actualDistance==null) {
-					nbVertices++;
-					sumOfallVertices+=maxDistance_of_D+1;
-					nodesAlreadySeen.put(aNeighbour, maxDistance_of_D+1);
-					stack.add(aNeighbour);
-				}
-			}
-		}
-		
-		dataPool.realease(nodesAlreadySeen);
-		return new ResultBFS(maxDistance_of_D,nbVertices,sumOfallVertices);
+		return new Let_BFS(dataPool).apply(actualNode);
 	}
 
 }
@@ -170,18 +160,9 @@ class BFS_OfX implements Callable<ResultBFS>,Function<Node,ResultBFS> {
 
 public class Diameter_APL_Graph {
 	
-	
-	public static void diameter_and_APL_ofGraph(Graph myGraph) {
-		
+	public static void diameter_and_APL_ofGraph_Executor(Graph myGraph) {
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		FixedDataStruckPool dataPool=new FixedDataStruckPool(corePoolSize);
-		
-		Stream<Node> stream =myGraph.mapNodes.values().stream().parallel();
-		Stream<ResultBFS> stream2 = stream.map(new Let_BFS(dataPool));
-		Optional<ResultBFS> rst=stream2.reduce(new sumResult());
-		System.out.println(rst.get());
-	
-		/* Executor version
 		
 		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
 		CompletionService<ResultBFS> completion = new ExecutorCompletionService<>(execute);
@@ -189,7 +170,7 @@ public class Diameter_APL_Graph {
 		
 		int nbTaskCreate = 0;
 		while (itNodes.hasNext()) {
-			completion.submit(new BFS_OfX(itNodes.next(),dataPool));
+			completion.submit(new BFS(itNodes.next(),dataPool));
 			nbTaskCreate++;
 		}
 
@@ -213,7 +194,18 @@ public class Diameter_APL_Graph {
 		}
 		execute.shutdown();
 		System.out.println(new ResultBFS(diameter, nbVertices, sumOfallVertices));
-		*/
+		
+	}
+	
+	public static void diameter_and_APL_ofGraph_Stream(Graph myGraph) {
+		
+		int corePoolSize = Runtime.getRuntime().availableProcessors();
+		
+		FixedDataStruckPool dataPool=new FixedDataStruckPool(corePoolSize);
+		Stream<Node> streamOfNodes =myGraph.mapNodes.values().stream().parallel();
+		Stream<ResultBFS> streamOfResults = streamOfNodes.map(new Let_BFS(dataPool));
+		Optional<ResultBFS> rst=streamOfResults.reduce(new sumResult());
+		System.out.println(rst.get());
 	}
 	
 	public static void main(String[] args) {
@@ -225,7 +217,8 @@ public class Diameter_APL_Graph {
 		if(myGraph==null) {return;}
 		
 		ManageInput.printMemoryStart();
-		diameter_and_APL_ofGraph(myGraph);
+		diameter_and_APL_ofGraph_Stream(myGraph);
+		//diameter_and_APL_ofGraph_Executor(myGraph);
 		ManageInput.printMemoryEND();
 		
 	}

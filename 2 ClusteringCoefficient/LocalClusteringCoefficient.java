@@ -5,10 +5,10 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class AverageClusteringCoefficient {
+public class LocalClusteringCoefficient {
 
 
-	public static void averageClusteringCoefficient(Graph myGraph) {
+	public static void localClusteringCoefficient(Graph myGraph) {
 		
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
@@ -18,7 +18,7 @@ public class AverageClusteringCoefficient {
 		Iterator<Node> itNodes = myGraph.mapNodes.values().iterator();
 		
 		while (itNodes.hasNext()) {
-			completion.submit(new FindNbTriangles_OfX_WithOptimisation(itNodes.next(), true));
+			completion.submit(new FindNbTriangles(itNodes.next(), true));
 			nbTaskCreate++;
 		}
 
@@ -41,7 +41,7 @@ public class AverageClusteringCoefficient {
 		Node actualNode = null;
 		while (itNodes.hasNext()) {
 			actualNode = itNodes.next();
-			nbTri_X = actualNode.getNbTriangle();
+			nbTri_X = actualNode.getNbTriangle() ;
 			degree_X = actualNode.neighbours.size();
 			if (degree_X < 2) {
 				continue;
@@ -62,9 +62,8 @@ public class AverageClusteringCoefficient {
 		
 		Graph myGraph = ManageInput.creatGraph(args[0]);
 		if(myGraph==null) {return;}
-		
 		ManageInput.printMemoryStart();
-		averageClusteringCoefficient(myGraph);
+		localClusteringCoefficient(myGraph);
 		ManageInput.printMemoryEND();
 		
 	}

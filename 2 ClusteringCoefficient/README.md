@@ -3,7 +3,7 @@ AUVERT RAPHAEL
 
 # TP2 Clustering Coefficient (Global and Local) , Diameter and Average path length (APL) with All Pairs Shortest Path (APSP)
 
-## for the two ClusteringCoefficient : Basic-MT-Skip
+## for Global and Local ClusteringCoefficient : Basic-MT-Skip
 
 > MULTITHREADING (parallel) version : Enumerating over Neighbor Pairs WITH Delegating Low-Degree Vertices AND Skipping Vertices with d(v) < 2
 
@@ -26,7 +26,7 @@ AUVERT RAPHAEL
 
 	java GlobalClusteringCoefficient [FileName]
 
-	java AverageClusteringCoefficient [FileName]
+	java LocalClusteringCoefficient [FileName]
 
 	java Diameter_APL_Graph [FileName]
 
@@ -39,17 +39,20 @@ AUVERT RAPHAEL
 ##### 4.1.1 Clustering (Global and Local)
 
 	
-	The complexity is the same for the both algorithms , only 2* nb(tri) will be calculated
+	The complexity is the same for the both algorithms , only 2 * nb(tri) will be calculated.
 	with p processors
 	Worst case (Complete graph) :
 		O(  ( m^(3/2) )/p  ) + Prefix_sum
 		-
 	  	m : number of edges
-	  	Prefix_sum : is not implemented here , so it cost n
+	  	Prefix_sum : impossible for Average so it cost n , for Global it cost logp(n)
+	  	-
+	  	Global : We look for m^(3/2) neighour on each node with p processors
+	  	Local : We look for m^(3/2) neighour on each node with p processors and update a concurrent variable on each node of the number of triangles to which it belongs
 
 ##### 4.1.1 Diameter and APL
 
-	The complexity is the same for the both algorithms and can be calculated at the same time
+	The complexity and algorithm is the same for the both so they can be calculated at the same time.
 	with p processors
 	Worst case (Complete graph) :
 		O( (m*n) /p ) + Prefix_sum
@@ -57,6 +60,8 @@ AUVERT RAPHAEL
 	  	m : number of edges
 	  	n : number of nodes
 	  	Prefix_sum : it cost logp(n)
+	  	-
+	  	We do a BFS on each node with p processors
 
 #### 4.2 SPACE COMPLEXITY
 	
@@ -64,24 +69,39 @@ AUVERT RAPHAEL
 	
 	with p processors
 	Worst case (Complete graph) :
-		hs(n) + hs(2*m)
+		hs(n) * hs(m)
 		-
+		n : number of nodes
+		m : number of edges
 		hs : HashSize coeff multiplicator , maximum 2
+		-
+		We have an hashMap of all the Nodes , each node have an hashSet of all neighbours
 
 
 ##### 4.2.1 Diameter and APL
 	
 	with p processors
 	Worst case (Complete graph) :
-		hs(n) + hs(2*m) + p*hs(m)
+		(hs(n) * hs(m)) + p*hs(m)
 		-
+		n : number of nodes
+		m : number of edges
 		hs : HashSize coeff multiplicator , maximum 2
+		-
+		We have an hashMap of all the Nodes , each node have an hashSet of all neighbours and we have p hashmap of size max : m
 
 
-#### 4.3 IMPLEMENTATION IN JAVA
+#### 4.4 IMPLEMENTATION IN JAVA
 
-Toute les implementation passe a l'echelle , toutes les operations concurrentes sont atomiques et avec des struck lock-free
-et sont les plus optimisé pour les cas de contention.
+2 implementations Parallele :
+	Executor
+	Stream
+
+Toute les implementation passe a l'echelle , toutes les operations concurrentes : sont atomiques et avec des struck lock-free
+et sont les plus optimisé possible pour les cas de contention (voir longAdder)
+
+les versions avec Executor ne profite pas du FORK/JOIN et donc le prefimSum est fait en serie
+les versions avec Stream profite du FORK/JOIN et donc le prefimSum est fait en parallele
 
 Un seul et unique parcout du fichier
 Une implementation la plus legere possible en memoire est proposé avec comme contraine :
@@ -96,13 +116,6 @@ La structure de donnée est une :
 	- Nous avons un Ierateur en O(1) pour l'operation Next
 	- Chaque sommet stock un linkedHashSet de ces voisins accessibles
 
-
-#### 4.4 ALGORITHME
-
-##### 4.4.1 Clustering (Global and Local)
-
-
-##### 4.4.1 Diameter and APL
 
 
 ### 5. REFERENCES

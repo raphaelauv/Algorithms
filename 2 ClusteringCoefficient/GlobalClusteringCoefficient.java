@@ -1,19 +1,36 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+class Graph {
+	
+	LinkedHashMap<Integer, Node> mapNodes;
+	
+	public Graph() {
+		this.mapNodes = new LinkedHashMap<>();
+	}
+	
+	public void addEdge(int actualID, int neighbourID) {
+		Node actualNode = this.mapNodes.computeIfAbsent(actualID,k ->new Node(actualID));
+		if(actualID!=neighbourID) {
+			Node neighbourNode = this.mapNodes.computeIfAbsent(neighbourID,k ->new Node(neighbourID));
+			actualNode.insertEdge(neighbourNode);
+			neighbourNode.insertEdge(actualNode);
+		}
+	}
+}
 
 class Node {
 	
@@ -24,7 +41,7 @@ class Node {
 	public Node(int id) {
 		this.id = id;
 		this.neighbours = new LinkedHashSet<>(); 			//better than linkedList for the parallele version without marqued technique
-		this.nbInsideTriangle = new LongAdder();
+		this.nbInsideTriangle = new LongAdder();			//only for Average
 	}
 
 	
@@ -46,57 +63,50 @@ class Node {
 
 }
 
-
-class FixedDataStruckPool{
-	private int nbStruck;
-	private int nbCreated;
-	private ConcurrentLinkedDeque<HashMap<Node, Integer>> listStruck;
-	 
-	public FixedDataStruckPool(int nbStruck) {
-		this.nbStruck = nbStruck+4;
-		this.nbCreated = 0;
-		this.listStruck = new ConcurrentLinkedDeque<>();
+class ResulGlobal {
+	int nbV;
+	int nbTri;
+	public ResulGlobal(int nbV, int nbTri) {
+		this.nbV = nbV;
+		this.nbTri = nbTri;
 	}
-	public HashMap<Node, Integer> getStruck() {
-		if(nbCreated<nbStruck) {
-			HashMap<Node, Integer> struck = new HashMap<>();
-			nbCreated++;
-			return struck;
-		}else {
-			return listStruck.poll();
-		}
-	}
-	public void realease(HashMap<Node, Integer> struck) {
-		struck.clear();
-		listStruck.addFirst(struck);
+	@Override
+	public String toString() {
+		double cluGraph = (3 * nbTri) /(double)nbV;
+		return "nb Tri : "+nbTri+" | nb V : "+nbV+" | CLU_G : "+cluGraph;
 	}
 	
-	public int getNbAvailable() {
-		return listStruck.size();
+	
+}
+
+class sumResultGlobal implements BinaryOperator<ResulGlobal>{
+
+	@Override
+	public ResulGlobal apply(ResulGlobal t, ResulGlobal u) {
+		//return new ResulGlobal(t.nbV+u.nbV, t.nbTri+u.nbTri);
+		t.nbTri+=u.nbTri;
+		t.nbV+=u.nbV;
+		return t;
 	}
 }
 
 
-
-/*
- * Cluster coefficient job
- */
-class FindNbTriangles_OfX_WithOptimisation implements Callable<Integer> {
-
-	private Node node;
-	boolean isAverageClusterMode;
+class Let_FindNbTriangles implements Function<Node,ResulGlobal> {
 	
-	public FindNbTriangles_OfX_WithOptimisation(Node node,boolean isAverageClusterMode) {
-		this.node = node;
+	public Let_FindNbTriangles() {}
+	
+	boolean isAverageClusterMode;
+	public Let_FindNbTriangles(boolean isAverageClusterMode) {
 		this.isAverageClusterMode=isAverageClusterMode;
 	}
-
-	public Integer call() throws Exception {
-		int nb = 0;
 	
+	@Override
+	public ResulGlobal apply(Node node) {
+		
+		int nbTri = 0;
 		int myDegree = node.neighbours.size();
 		if(myDegree<2) {
-			return 0;
+			return new ResulGlobal(0, 0);
 		}
 		
 		int neighbourDegree;
@@ -106,12 +116,12 @@ class FindNbTriangles_OfX_WithOptimisation implements Callable<Integer> {
 			if(neighbourDegree>myDegree) {
 				continue;
 			}else if(neighbourDegree==myDegree) {
-				if(aNeighbour.id>this.node.id) {
+				if(aNeighbour.id>node.id) {
 					continue;
 				}
 			}
 			for (Node aNN : aNeighbour.neighbours) {
-				if(aNN.id==this.node.id) { 
+				if(aNN.id==node.id) { 
 					continue;//do not look for myself
 				}
 				
@@ -120,124 +130,48 @@ class FindNbTriangles_OfX_WithOptimisation implements Callable<Integer> {
 				if(neighbourDegree>myDegree) {
 					continue;
 				}else if(neighbourDegree==myDegree) {
-					if(aNN.id>this.node.id) {
+					if(aNN.id>node.id) {
 						continue;
 					}
 				}
 				if(node.neighbours.contains(aNN)) {
-					nb++;
+					nbTri++;
 					if(isAverageClusterMode) {
-						Node.incrementNbTriangle(this.node, aNeighbour, aNN);
+						Node.incrementNbTriangle(node, aNeighbour, aNN);
 					}
 				}
 			}
 		}
-		//not use in case of enPlace
-		return nb /2;//because we count each triangle in the two ways possible
-	}
-}
-
-class Graph {
-	
-	LinkedHashMap<Integer, Node> mapNodes;
-	
-	public Graph() {
-		this.mapNodes = new LinkedHashMap<>();
-	}
-	
-	public void addEdge(int actualID, int neighbourID) {
-		Node actualNode = this.mapNodes.computeIfAbsent(actualID,k ->new Node(actualID));
-		if(actualID!=neighbourID) {
-			Node neighbourNode = this.mapNodes.computeIfAbsent(neighbourID,k ->new Node(neighbourID));
-			actualNode.insertEdge(neighbourNode);
-			neighbourNode.insertEdge(actualNode);
-		}
-	}
-}
-
-final class ManageInput{
-	
-	private static void printMemory(String msg) {
-		System.out.println(msg+" | Mémoire allouée : " +
-		(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
-	}
-	
-	public static void printMemoryStart() {
-		printMemory("FIN LECTURE FICHIER + CREATION GRAPH");
-	}
-	
-	public static void printMemoryEND() {
-		printMemory("FIN PARCOUR");
-	}
-	
-	public static boolean parseAndFillGraph2(Graph graph, BufferedReader file) throws IOException {
-		String line = "";
-		Long nbLine = 0l;
-		String[] arrayOfLine;
-		int actualId;
-		int actualIdNeighbour;
+		//not use in case of isAverageClusterMode
 		
-		while ((line =file.readLine()) != null) {
-			nbLine++;
-			if (line.length()==0 || line.charAt(0) == '#') {
-				continue;
-			}
-			
-			arrayOfLine = line.split("\\s");
-			if(arrayOfLine.length!=2) {
-				System.out.println("ERREUR ligne "+nbLine+" format Invalide");
-				return false;
-			}
-
-			//System.out.println(arrayOfLine[0] +" "+ arrayOfLine[1]);
-			try {
-				actualId = Integer.parseInt(arrayOfLine[0]);
-				actualIdNeighbour = Integer.parseInt(arrayOfLine[1]);
-
-				graph.addEdge(actualId, actualIdNeighbour);
-			}catch(NumberFormatException e) {
-				System.out.println("ERREUR ligne "+nbLine+" format Invalide");
-				return false;
-			}
-			
-		}	
-		return true;
-
+		nbTri /=2;//because we count each triangle in the two ways possible
+		int nbV = (myDegree * (myDegree - 1) / 2);
+		return new ResulGlobal(nbV,nbTri);
+		
 	}
-	
-	
-	public static Graph creatGraph(String arg) {
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(arg));
-			Graph myGraph = new Graph();
-
-			if (!parseAndFillGraph2(myGraph, br)) {
-				return null;
-			}
-			br.close();
-			return myGraph;
-
-		} catch (NumberFormatException e) {
-			System.out.println("veuillez entrez un nombre valide");
-		} catch (IOException e) {
-			System.out.println("ERREUR DE FICHIER - LECTURE OU ECRITURE");
-			System.out.println("verifier le nom du fichier d'input");
-		}
-		return null;
-	}
-	
-	public static void missingArgs() {
-		System.out.println("il manque arguments");
-        System.out.println("Pour exécuter : java Exo2 [nom_du_fichier]");
-	}
-
 }
+
+
+class FindNbTriangles implements Callable<Integer> {
+
+	private Node node;
+	boolean isAverageClusterMode;
+	
+	public FindNbTriangles(Node node,boolean isAverageClusterMode) {
+		this.node = node;
+		this.isAverageClusterMode=isAverageClusterMode;
+	}
+	
+	@Override
+	public Integer call() throws Exception {		
+		return new Let_FindNbTriangles(isAverageClusterMode).apply(node).nbTri;
+	}
+}
+
 
 public class GlobalClusteringCoefficient {
 	
-
-	public static void globalClusteringCoefficient(Graph myGraph) {
-		
+	public static void globalClusteringCoefficient_Executor(Graph myGraph) {
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		ExecutorService execute = Executors.newFixedThreadPool(corePoolSize);
 		CompletionService<Integer> completion = new ExecutorCompletionService<>(execute);
@@ -263,7 +197,7 @@ public class GlobalClusteringCoefficient {
 			if (degreeTmpNode > 0) {
 				nbV += (degreeTmpNode * (degreeTmpNode - 1) / 2);
 			}
-			completion.submit(new FindNbTriangles_OfX_WithOptimisation(tmpNode,false));
+			completion.submit(new FindNbTriangles(tmpNode,false));
 			nbTaskToManage++;
 			/*
 			 * unnecessary memory optimisation -> to limit the number of futurs inside CompletionService
@@ -312,7 +246,15 @@ public class GlobalClusteringCoefficient {
 		
 		double cluGraph = (3 * nbTri) /(double)nbV;
 		System.out.println("nb Tri : "+nbTri+" | nb V : "+nbV+" | CLU_G : "+cluGraph );
+
+	}
+	
+	public static void globalClusteringCoefficient_Stream(Graph myGraph) {
 		
+		Stream<Node> streamOfNodes =myGraph.mapNodes.values().stream().parallel();
+		Stream<ResulGlobal> streamOfResults = streamOfNodes.map(new Let_FindNbTriangles());
+		Optional<ResulGlobal> rst=streamOfResults.reduce(new sumResultGlobal());
+		System.out.println(rst.get());
 	}
 
 	
@@ -326,7 +268,8 @@ public class GlobalClusteringCoefficient {
 		Graph myGraph = ManageInput.creatGraph(args[0]);
 		if(myGraph==null) {return;}
 		ManageInput.printMemoryStart();
-		globalClusteringCoefficient(myGraph);
+		globalClusteringCoefficient_Stream(myGraph);
+		//globalClusteringCoefficient_Executor(myGraph);
 		ManageInput.printMemoryEND();
         	
 	}
