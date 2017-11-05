@@ -13,7 +13,7 @@ import java.util.Random;
 public class RandomGraph {
 
 	private final static int flag_ERDOS = 1;
-	private final static int flag_BARABASI =2;
+	private final static int flag_BARABASI = 2;
 	
 	public static String outputFileName;
 	public static int nbVertex_ASK;
@@ -27,6 +27,7 @@ public class RandomGraph {
 	public static int actualGraph_nbVertex = 0;
 	public static int actualGraph_nbEdges = 0;
 	public static int actualGraph_degreeMaximum = 0;
+	public static int actualGraph_nbCC = 0;
 	public static boolean emptyGraph = true;
 	
 	public static boolean[][] erdosReny(int nbVertex, int p) {
@@ -184,7 +185,7 @@ public class RandomGraph {
 
 	public static Graph createGraphFromMatrice(boolean[][] matrice, boolean oriented) {
 
-		Graph graph = new Graph();
+		Graph graph = new Graph(oriented);
 		for (int i = 0; i < matrice.length; i++) {
 			for (int j = 0; j < i; j++) {
 				if (matrice[i][j]) {
@@ -205,6 +206,7 @@ public class RandomGraph {
 		INT_MinMaxAverage mma_nbVertex = new INT_MinMaxAverage(k_ASK, "nbVertex ");
 		INT_MinMaxAverage mma_nbEdges = new INT_MinMaxAverage(k_ASK, "nbEdge   ");
 		INT_MinMaxAverage mma_maxDegree = new INT_MinMaxAverage(k_ASK, "maxDeg   ");
+		INT_MinMaxAverage mma_nbCC = new INT_MinMaxAverage(k_ASK, "nbCC     ");
 		INT_MinMaxAverage mma_diameter = new INT_MinMaxAverage(k_ASK, "diameter ");
 		DOUBLE_MinMaxAverage mma_APL = new DOUBLE_MinMaxAverage(k_ASK, "APL      ");
 		INT_MinMaxAverage mma_nbTri = new INT_MinMaxAverage(k_ASK, "nbTri    ");
@@ -256,18 +258,21 @@ public class RandomGraph {
 
 			rstBFS = Diameter_APL_Graph.diameter_and_APL_ofGraph_Stream(myGraph);
 			rstLG = ClusteringCoefficient.globalAndLocal(myGraph);
+			actualGraph_nbCC = Let_BFS_CC.nbCCinGraph(myGraph);
 			
 			if (k_ASK == 1) {
 				System.out.println("nbVertex "+actualGraph_nbVertex);
 				System.out.println("nbEdge "+actualGraph_nbEdges);
 				System.out.println("Max degree "+actualGraph_degreeMaximum);
+				System.out.println("nbCC "+actualGraph_nbCC);
 				System.out.println(rstBFS);
-				System.out.println(rstLG);				
+				System.out.println(rstLG);			
 				return;
 			} else {
 				mma_nbVertex.add(actualGraph_nbVertex);
 				mma_nbEdges.add(actualGraph_nbEdges);
 				mma_maxDegree.add(actualGraph_degreeMaximum);
+				mma_nbCC.add(actualGraph_nbCC);
 				mma_diameter.add(rstBFS.diameter);
 				mma_APL.add(rstBFS.getAPL());
 				mma_nbTri.add(rstLG.nbTri);
@@ -280,6 +285,7 @@ public class RandomGraph {
 				System.out.println(mma_nbVertex);
 				System.out.println(mma_nbEdges);
 				System.out.println(mma_maxDegree);
+				System.out.println(mma_nbCC);
 				System.out.println(mma_diameter);
 				System.out.println(mma_APL);
 				System.out.println(mma_nbTri);
@@ -295,11 +301,11 @@ public class RandomGraph {
 	public static void main(String[] args) {
 
 		outputFileName = "toto";
-		nbVertex_ASK = 1000;
+		nbVertex_ASK = 100;
 		proba_ASK = 5;
 		k_ASK = 10;
 		oriented = false;
-		verbose = true;
+		verbose = false;
 		d_ASK=2;
 		n0_ASK = 3;
 		

@@ -56,7 +56,7 @@ public final class ManageInput{
 	public static Graph creatGraph(String arg,boolean oriented) {
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(arg));
-			Graph myGraph = new Graph();
+			Graph myGraph = new Graph(oriented);
 
 			if (!parseAndFillGraph2(myGraph, br,oriented)) {
 				return null;

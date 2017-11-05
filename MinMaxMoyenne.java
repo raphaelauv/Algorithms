@@ -1,5 +1,5 @@
 
-public abstract class MinMaxAverage<T> {
+abstract class MinMaxAverage<T> {
 	int nb;
 	String name;
 	T min;
@@ -45,7 +45,7 @@ class DOUBLE_MinMaxAverage extends MinMaxAverage<Double> {
 
 	@Override
 	public String toString() {
-		return super.toString() + "| average : " + sum / nb;
+		return super.toString() + "| average : " + sum /(double) nb;
 	}
 }
 
@@ -77,7 +77,7 @@ class INT_MinMaxAverage extends MinMaxAverage<Integer> {
 
 	@Override
 	public String toString() {
-		return super.toString() + "| average : " + sum / nb;
+		return super.toString() + "| average : " + sum /(double) nb;
 	}
 }
 

@@ -2,14 +2,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -18,9 +12,11 @@ import java.util.stream.Stream;
 class Graph {
 	
 	LinkedHashMap<Integer, Node> mapNodes;
+	boolean isDirected;
 	
-	public Graph() {
+	public Graph(boolean oriented) {
 		this.mapNodes = new LinkedHashMap<>();
+		this.isDirected= oriented;
 	}
 	
 	public void addEdge(int actualID, int neighbourID,boolean oriented) {
@@ -37,6 +33,9 @@ class Graph {
 
 class Node {
 	
+	private CC cc;
+	boolean alreadyAddToStackForVisite;						//only for CC
+
 	final int id;
 	Collection<Node> neighbours;
 	private LongAdder nbInsideTriangle;						//only for AverageClusteringCoefficient
@@ -47,6 +46,20 @@ class Node {
 		this.nbInsideTriangle = new LongAdder();			//only for Average
 	}
 
+	public synchronized CC setAndGetCC(CC ccArg) {
+		if (this.cc == null) {
+			this.cc = ccArg;
+		}
+		return this.cc;
+	}
+	
+	public void setCC(CC ccArg) {
+		this.cc = ccArg;
+	}
+	
+	public CC getCC() {
+		return this.cc;
+	}
 	
 	public void insertEdge(Node neighbour) {
 		this.neighbours.add(neighbour);
@@ -163,7 +176,6 @@ class Let_FindNbTriangles implements Function<Node,ResulGlobal> {
 				}
 			}
 		}
-		//not use in case of isAverageClusterMode
 		
 		nbTri /=2;//because we count each triangle in the two ways possible
 		int nbV = (myDegree * (myDegree - 1) / 2);
@@ -208,7 +220,7 @@ public class ClusteringCoefficient {
 		while (itNodes.hasNext()) {
 			actualNode = itNodes.next();
 			nbTri_X = actualNode.getNbTriangle() ;
-			actualNode.resetNbTriangle();
+			actualNode.resetNbTriangle(); 				//TODO necessary ??
 			degree_X = actualNode.neighbours.size();
 			if (degree_X < 2) {
 				continue;

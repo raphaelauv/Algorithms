@@ -14,6 +14,8 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+
+
 class FixedDataStruckPool{
 	private int nbStruck;
 	private int nbHashMapCreated;
