@@ -7,8 +7,18 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
+class ArrayListInteger extends ArrayList<Integer>{
+	public ArrayListInteger(int capacity) {
+		super(capacity);
+	}
+	public ArrayListInteger() {
+		super();
+	}
+}
 
 public class RandomGraph {
 
@@ -30,37 +40,59 @@ public class RandomGraph {
 	public static int actualGraph_nbCC = 0;
 	public static boolean emptyGraph = true;
 	
-	public static boolean[][] erdosReny(int nbVertex, int p) {
+	//public static boolean[][] erdosReny(int nbVertex, int p) {
+	public static ArrayList<Integer>[] erdosReny(int nbVertex, int p) {
 
 		actualGraph_nbVertex = 0;
 		actualGraph_nbEdges = 0;
 		actualGraph_degreeMaximum = 0;
 		
 		int[] degrees = new int[nbVertex];
+		Arrays.fill(degrees, -1);
+		
 		int maxDegree = 0;
+		int defaultCapacity=(1/p)*nbVertex;
+		if(defaultCapacity<10) {
+			defaultCapacity =10;
+		}
 
-		boolean[][] matrice = new boolean[nbVertex][];
+		//boolean[][] matrice = new boolean[nbVertex][];
+		ArrayList<Integer>[] matrice = new ArrayListInteger[nbVertex];
 
 		Random rd = new Random();
 
 		for (int i = 0; i < nbVertex; i++) {
 
-			matrice[i] = new boolean[i];
+			//matrice[i] = new boolean[i];
+			matrice[i] = new ArrayListInteger(defaultCapacity);
 
 			if (p == 0) {
 				continue;
 			}
 
-			for (int j = 0; j < i; j++) {
+			int j = i+1;
+			if(oriented) {
+				j=0;
+			}
+			
+			for (; j < nbVertex; j++) {
+				
+				if(i==j) {
+					continue;
+				}
+				
 				if (rd.nextInt(p) == 0) {
 					emptyGraph = false;
-					matrice[i][j] = true;
+					matrice[i].add(j);
+					//matrice[i][j] = true;
 
-					if(degrees[i]==0) {
+					if(degrees[i]==-1) {
 						actualGraph_nbVertex++;
+						degrees[i]=0;
 					}
-					if(degrees[j]==0) {
+					if(degrees[j]==-1) {
 						actualGraph_nbVertex++;
+						degrees[j]=0;
 					}
 					
 					actualGraph_nbEdges++;
@@ -69,10 +101,15 @@ public class RandomGraph {
 					if (degrees[i] > maxDegree) {
 						maxDegree = degrees[i];
 					}
-					degrees[j]++;
-					if (degrees[j] > maxDegree) {
-						maxDegree = degrees[j];
+					
+					if(!oriented) {
+						degrees[j]++;
+						if (degrees[j] > maxDegree) {
+							maxDegree = degrees[j];
+						}
 					}
+					
+					
 				}
 			}
 		}
@@ -80,18 +117,38 @@ public class RandomGraph {
 		return matrice;
 	}
 
-	public static boolean[][] barabasiAlbert(int d, int n0, int nbVertex) {
+	public static ArrayList<Integer>[] barabasiAlbert(int d, int n0, int nbVertex) {
 
-		boolean[][] matrice = new boolean[nbVertex][nbVertex];
+		//boolean[][] matrice = new boolean[nbVertex][nbVertex];
+		ArrayList<Integer>[] matrice = new ArrayListInteger[nbVertex];
 		int[] degrees = new int[nbVertex];
 		int n0Comple = n0 - 1;
 		int maxDegree = n0Comple;
 		int nbAllDegrees = (n0 * n0Comple) / 2;
 
+		int defaultCapacity=n0+d;
+		if(defaultCapacity<10) {
+			defaultCapacity =10;
+		}
+		
 		for (int i = 0; i < n0; i++) {
 			degrees[i] = n0Comple;
-			for (int j = i + 1; j < n0; j++) {
-				matrice[i][j] = true;
+			matrice[i] = new ArrayListInteger(defaultCapacity);
+			
+			
+			int j = i+1;
+			if(oriented) {
+				j=0;
+			}
+			
+			for (; j < n0; j++) {
+				
+				if(i==j) {
+					continue;
+				}
+				
+				matrice[i].add(j);
+				//matrice[i][j] = true;
 			}
 		}
 
@@ -111,7 +168,9 @@ public class RandomGraph {
 					
 					if (i == j) {
 						continue;
-					} else if (matrice[i][j]) {
+					//} else if (matrice[i][j]) {
+						
+					} else if (matrice[i].contains(j) || matrice[j].contains(i)) {
 						continue;
 					} else {
 
@@ -127,8 +186,8 @@ public class RandomGraph {
 							myDegree++;
 
 							nbAllDegrees++;
-
-							matrice[i][j] = true;
+							matrice[i].add(j);
+							//matrice[i][j] = true;
 							actualGraph_nbEdges++;
 
 							actualGraph_nbEdges++;
@@ -152,7 +211,21 @@ public class RandomGraph {
 		return matrice;
 	}
 
-	public static void printMatrice(boolean[][] matrice) {
+	public static void printArrayListMatrice(ArrayList<Integer>[] matrice) {
+		for (int i = 0; i < matrice.length; i++) {
+			for (int j = 0; j < matrice.length; j++) {
+				if (matrice[i].contains(j)) {
+					System.out.print("* ");
+				} else {
+					System.out.print("0 ");
+				}
+
+			}
+			System.out.println("\n");
+		}
+	}
+	
+	public static void printBooleanMatrice(boolean[][] matrice) {
 		for (int i = 0; i < matrice.length; i++) {
 			for (int j = 0; j < i; j++) {
 				if (matrice[i][j]) {
@@ -166,7 +239,24 @@ public class RandomGraph {
 		}
 	}
 
-	public static void writeMatrice(boolean[][] matrice, OutputStream out) throws IOException {
+	
+	public static void writeArrayListMatrice(ArrayList<Integer>[] matrice, OutputStream out) throws IOException {
+		String ligneJ = "";
+		byte[] byteJ = ligneJ.getBytes();
+		byte[] jumpLine = "\n".getBytes();
+		for (int i = 0; i < matrice.length; i++) {
+			for (int j = 0; j < matrice[i].size(); j++) {
+				ligneJ = "" + i + " " + matrice[i].get(j);
+				byteJ = ligneJ.getBytes();
+				out.write(byteJ, 0, byteJ.length);
+				out.write(jumpLine);
+			}
+		}
+
+	}
+	
+	
+	public static void writeBooleanListMatrice(boolean[][] matrice, OutputStream out) throws IOException {
 		String ligneJ = "";
 		byte[] byteJ = ligneJ.getBytes();
 		byte[] jumpLine = "\n".getBytes();
@@ -183,9 +273,20 @@ public class RandomGraph {
 		}
 	}
 
-	public static Graph createGraphFromMatrice(boolean[][] matrice, boolean oriented) {
+	
+	public static Graph createGraphFromArrayListMatrice(ArrayList<Integer>[] matrice, boolean oriented) {
+		Graph graph = new Graph(oriented,nbVertex_ASK);
+		for (int i = 0; i < matrice.length; i++) {
+			for (int j = 0; j < matrice[i].size(); j++) {
+				graph.addEdge(i, matrice[i].get(j), oriented);
+			}
+		}
+		return graph;
+	}
+	
+	public static Graph createGraphFromBooleanMatrice(boolean[][] matrice, boolean oriented) {
 
-		Graph graph = new Graph(oriented);
+		Graph graph = new Graph(oriented,nbVertex_ASK);
 		for (int i = 0; i < matrice.length; i++) {
 			for (int j = 0; j < i; j++) {
 				if (matrice[i][j]) {
@@ -200,8 +301,8 @@ public class RandomGraph {
 	public static void analyse(int flag) {
 		
 		Graph myGraph;
-		ResultGloalAndLocal rstLG;
-		ResultBFS rstBFS;
+		ResultGloalAndLocal rstLG = null;
+		ResultBFS rstBFS = null;
 
 		INT_MinMaxAverage mma_nbVertex = new INT_MinMaxAverage(k_ASK, "nbVertex ");
 		INT_MinMaxAverage mma_nbEdges = new INT_MinMaxAverage(k_ASK, "nbEdge   ");
@@ -215,7 +316,8 @@ public class RandomGraph {
 		DOUBLE_MinMaxAverage mma_cluL = new DOUBLE_MinMaxAverage(k_ASK, "Clu_L    ");
 
 		
-		boolean[][] matrice;
+		//boolean[][] matrice;
+		ArrayList<Integer>[] matrice = null;
 		
 		
 		for (int i = 0; i < k_ASK; i++) {
@@ -227,7 +329,7 @@ public class RandomGraph {
 			if(flag==flag_ERDOS) {
 				matrice = erdosReny(nbVertex_ASK, proba_ASK);	
 			}else if(flag==flag_BARABASI) {
-				matrice = barabasiAlbert(d_ASK, n0_ASK, nbVertex_ASK);
+				//matrice = barabasiAlbert(d_ASK, n0_ASK, nbVertex_ASK);
 			}else {
 				System.out.println("ERREUR FLAG");
 				return;
@@ -239,20 +341,22 @@ public class RandomGraph {
 				emptyGraph = true;
 				continue;
 			}
-			//printMatrice(matrice);
+			//printArrayListMatrice(matrice);
 
 			if (i == 0) {
 				try {
 					Path file2 = Paths.get("./" + outputFileName);
 					OutputStream out = new BufferedOutputStream(Files.newOutputStream(file2, CREATE, TRUNCATE_EXISTING));
-					writeMatrice(matrice, out);
+					writeArrayListMatrice(matrice, out);
+					out.flush();
+					out.close();
 				} catch (Exception e) {
 					e.printStackTrace();
 					return;
 				}
 			}
 
-			myGraph = createGraphFromMatrice(matrice, oriented);
+			myGraph = createGraphFromArrayListMatrice(matrice, oriented);
 
 			// ManageInput.printMemoryStart();
 
@@ -301,9 +405,9 @@ public class RandomGraph {
 	public static void main(String[] args) {
 
 		outputFileName = "toto";
-		nbVertex_ASK = 100;
-		proba_ASK = 5;
-		k_ASK = 10;
+		nbVertex_ASK = 1000;
+		proba_ASK = 1;
+		k_ASK = 1;
 		oriented = false;
 		verbose = false;
 		d_ASK=2;

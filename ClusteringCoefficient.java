@@ -19,6 +19,11 @@ class Graph {
 		this.isDirected= oriented;
 	}
 	
+	public Graph(boolean oriented ,int defaultSize) {
+		this.mapNodes = new LinkedHashMap<>(defaultSize);
+		this.isDirected= oriented;
+	}
+	
 	public void addEdge(int actualID, int neighbourID,boolean oriented) {
 		Node actualNode = this.mapNodes.computeIfAbsent(actualID,k ->new Node(actualID));
 		if(actualID!=neighbourID) {
