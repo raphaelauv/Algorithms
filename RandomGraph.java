@@ -90,9 +90,12 @@ public class RandomGraph {
 						actualGraph_nbVertex++;
 						degrees[i]=0;
 					}
-					if(degrees[j]==-1) {
-						actualGraph_nbVertex++;
-						degrees[j]=0;
+					
+					if(!oriented) {
+						if(degrees[j]==-1) {
+							actualGraph_nbVertex++;
+							degrees[j]=0;
+						}
 					}
 					
 					actualGraph_nbEdges++;
@@ -119,93 +122,141 @@ public class RandomGraph {
 
 	public static ArrayList<Integer>[] barabasiAlbert(int d, int n0, int nbVertex) {
 
-		//boolean[][] matrice = new boolean[nbVertex][nbVertex];
 		ArrayList<Integer>[] matrice = new ArrayListInteger[nbVertex];
-		int[] degrees = new int[nbVertex];
+		int[] degreesOUT = new int[nbVertex];
+		Arrays.fill(degreesOUT, -1);
+		int[] degreesIN = new int[nbVertex];
+		
 		int n0Comple = n0 - 1;
+		
 		int maxDegree = n0Comple;
-		int nbAllDegrees = (n0 * n0Comple) / 2;
-
-		int defaultCapacity=n0+d;
-		if(defaultCapacity<10) {
-			defaultCapacity =10;
+		if(oriented) {
+			maxDegree*=2;
 		}
 		
-		for (int i = 0; i < n0; i++) {
-			degrees[i] = n0Comple;
-			matrice[i] = new ArrayListInteger(defaultCapacity);
-			
-			
-			int j = i+1;
-			if(oriented) {
-				j=0;
-			}
-			
-			for (; j < n0; j++) {
-				
-				if(i==j) {
-					continue;
-				}
-				
-				matrice[i].add(j);
-				//matrice[i][j] = true;
-			}
+		int nbAllDegrees = (n0 * n0Comple);
+		if(!oriented){
+			nbAllDegrees/=2;
 		}
 
+		int defaultCapacity =  d - n0 +1;
+		if (defaultCapacity < 10) {
+			defaultCapacity = 10;
+		}
+
+		for (int i = 0; i < nbVertex; i++) {
+			
+			if(i>=n0) {
+				matrice[i] = new ArrayListInteger(d+1);
+			}
+			else {
+				matrice[i] = new ArrayListInteger(defaultCapacity);
+				
+				degreesOUT[i] = n0Comple;
+				
+				if (oriented) {
+					degreesIN[i] = n0Comple;
+				}
+				
+				int j = i + 1;
+				if (oriented) {
+					j = 0;
+				}
+
+				for (; j < n0; j++) {
+
+					if (i == j) {
+						continue;
+					}
+
+					matrice[i].add(j);
+				}
+
+			}
+			
+		}
+
+		
+	
 		double proba = 0;
 
 		int myDegree = 0;
-		int degreeNeighbour = 0;
+		int degreeNeighbourOUT = 0;
+		int degreeNeighbourIN = 0;
 
-		for (int i = 0; i < nbVertex; i++) {
-			myDegree = degrees[i];
+		for (int i = nbVertex-1; i >n0-1 ; i--) {
+			myDegree = degreesOUT[i];
 			while (myDegree < d) {
-				for (int j = 0; j < nbVertex; j++) {
+
+				for (int j=0; j < nbVertex; j++) {
 
 					if (myDegree == d) {
 						break;
 					}
-					
+
 					if (i == j) {
 						continue;
-					//} else if (matrice[i][j]) {
-						
-					} else if (matrice[i].contains(j) || matrice[j].contains(i)) {
-						continue;
-					} else {
-
-						degreeNeighbour = degrees[j];
-						if (degreeNeighbour == 0) {
+					}
+					if (!oriented) {
+						if (matrice[i].contains(j) || matrice[j].contains(i)) {
 							continue;
 						}
+					} else {
+						if (matrice[i].contains(j)) {
+							
+							continue;
+						}
+					}
 
-						proba = degreeNeighbour / (double) (nbAllDegrees - myDegree);
+					degreeNeighbourOUT = degreesOUT[j];
+					degreeNeighbourIN = degreesIN[j];
+					
+					if (degreeNeighbourOUT == 0 || degreeNeighbourOUT==-1) {
+						continue;
+					}
 
-						System.out.println(proba);
-						if (Math.random() < proba) {
-							myDegree++;
+					proba = (degreeNeighbourOUT+degreeNeighbourIN) / (double) (nbAllDegrees - myDegree);
 
-							nbAllDegrees++;
-							matrice[i].add(j);
-							//matrice[i][j] = true;
-							actualGraph_nbEdges++;
+					//System.out.println(proba);
+					if (Math.random() < proba) {
+						myDegree++;
 
-							actualGraph_nbEdges++;
+						nbAllDegrees++;
+						matrice[i].add(j);
+						actualGraph_nbEdges++;
 
-							degrees[i]++;
-							if (degrees[i] > maxDegree) {
-								maxDegree = degrees[i];
+						
+						if(degreesOUT[i]==-1) {
+							actualGraph_nbVertex++;
+							degreesOUT[i]=0;
+						}
+						if(!oriented) {
+							if(degreesOUT[j]==-1) {
+								actualGraph_nbVertex++;
+								degreesOUT[j]=0;
+								degreesIN[j]=0;
 							}
-							degrees[j]++;
-							if (degrees[j] > maxDegree) {
-								maxDegree = degrees[j];
-							}
+						}
 
+						degreesOUT[i]++;
+						if (degreesOUT[i] > maxDegree) {
+							maxDegree = degreesOUT[i];
+						}
+						
+						if(!oriented) {
+							degreesOUT[j]++;
+							if (degreesOUT[j] > maxDegree) {
+								maxDegree = degreesOUT[j];
+							}
+						}else {
+							degreesIN[j]++;
 						}
 					}
 				}
+
 			}
 		}
+
 		emptyGraph = false;
 		actualGraph_degreeMaximum = maxDegree;
 		return matrice;
@@ -329,7 +380,7 @@ public class RandomGraph {
 			if(flag==flag_ERDOS) {
 				matrice = erdosReny(nbVertex_ASK, proba_ASK);	
 			}else if(flag==flag_BARABASI) {
-				//matrice = barabasiAlbert(d_ASK, n0_ASK, nbVertex_ASK);
+				matrice = barabasiAlbert(d_ASK, n0_ASK, nbVertex_ASK);
 			}else {
 				System.out.println("ERREUR FLAG");
 				return;
@@ -341,7 +392,7 @@ public class RandomGraph {
 				emptyGraph = true;
 				continue;
 			}
-			//printArrayListMatrice(matrice);
+			printArrayListMatrice(matrice);
 
 			if (i == 0) {
 				try {
@@ -405,15 +456,15 @@ public class RandomGraph {
 	public static void main(String[] args) {
 
 		outputFileName = "toto";
-		nbVertex_ASK = 1000;
+		nbVertex_ASK = 10;
 		proba_ASK = 1;
 		k_ASK = 1;
-		oriented = false;
+		oriented = true;
 		verbose = false;
-		d_ASK=2;
-		n0_ASK = 3;
+		d_ASK=3;
+		n0_ASK = 4;
 		
-		analyse(flag_ERDOS);
+		analyse(flag_BARABASI);
 		// ManageInput.printMemoryEND();
 	}
 }
