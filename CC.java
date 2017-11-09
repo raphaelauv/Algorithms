@@ -4,6 +4,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
+/*
+ * Not use , it's only necessary if we parallelize the CC counter
+ */
 class forestCC {
 
 	Collection<CC> list;

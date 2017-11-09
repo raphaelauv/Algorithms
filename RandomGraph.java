@@ -40,40 +40,47 @@ public class RandomGraph {
 	public static int actualGraph_nbCC = 0;
 	public static boolean emptyGraph = true;
 	
-	//public static boolean[][] erdosReny(int nbVertex, int p) {
-	public static ArrayList<Integer>[] erdosReny(int nbVertex, int p) {
-
+	
+	public static void resetGraphValues() {
 		actualGraph_nbVertex = 0;
 		actualGraph_nbEdges = 0;
 		actualGraph_degreeMaximum = 0;
+	}
+	
+	//public static boolean[][] erdosReny(int nbVertex, int p) {
+	public static ArrayList<Integer>[] erdosReny(int nbVertex, int p) {
+
+		resetGraphValues();
 		
-		int[] degrees = new int[nbVertex];
-		Arrays.fill(degrees, -1);
+		int[] degrees = new int[nbVertex];		//keep trace of degree of each node
+		Arrays.fill(degrees, -1);				// degree at -1 mean the node do not exist yet
 		
 		int maxDegree = 0;
-		int defaultCapacity=(1/p)*nbVertex;
-		if(defaultCapacity<10) {
-			defaultCapacity =10;
-		}
+		int defaultCapacity;	
+		
 
 		//boolean[][] matrice = new boolean[nbVertex][];
-		ArrayList<Integer>[] matrice = new ArrayListInteger[nbVertex];
+		ArrayList<Integer>[] matrice = new ArrayListInteger[nbVertex]; // Adjacency list
 
 		Random rd = new Random();
 
 		for (int i = 0; i < nbVertex; i++) {
 
-			//matrice[i] = new boolean[i];
-			matrice[i] = new ArrayListInteger(defaultCapacity);
-
 			if (p == 0) {
 				continue;
 			}
 
-			int j = i+1;
-			if(oriented) {
+			int j = i+1;				//a <-> b is the same than b <-> a , so we skip
+			if(oriented) {	
 				j=0;
 			}
+			
+			//matrice[i] = new boolean[i];
+			defaultCapacity = (nbVertex-j ) * (1/p); //to init the array at is probably futur filled size
+			if(defaultCapacity<10) {
+				defaultCapacity =10;
+			}
+			matrice[i] = new ArrayListInteger(defaultCapacity);
 			
 			for (; j < nbVertex; j++) {
 				
@@ -111,8 +118,6 @@ public class RandomGraph {
 							maxDegree = degrees[j];
 						}
 					}
-					
-					
 				}
 			}
 		}
@@ -122,7 +127,9 @@ public class RandomGraph {
 
 	public static ArrayList<Integer>[] barabasiAlbert(int d, int n0, int nbVertex) {
 
-		ArrayList<Integer>[] matrice = new ArrayListInteger[nbVertex];
+		resetGraphValues();
+		
+		ArrayList<Integer>[] matrice = new ArrayListInteger[nbVertex]; //Adjacency list
 		int[] degreesOUT = new int[nbVertex];
 		Arrays.fill(degreesOUT, -1);
 		int[] degreesIN = new int[nbVertex];
@@ -294,6 +301,9 @@ public class RandomGraph {
 		String ligneJ = "";
 		byte[] byteJ = ligneJ.getBytes();
 		byte[] jumpLine = "\n".getBytes();
+		if(oriented) {
+			out.write("#oriented Graph\n".getBytes());
+		}
 		for (int i = 0; i < matrice.length; i++) {
 			for (int j = 0; j < matrice[i].size(); j++) {
 				ligneJ = "" + i + " " + matrice[i].get(j);
@@ -310,6 +320,9 @@ public class RandomGraph {
 		String ligneJ = "";
 		byte[] byteJ = ligneJ.getBytes();
 		byte[] jumpLine = "\n".getBytes();
+		if(oriented) {
+			out.write("#oriented Graph\n".getBytes());
+		}
 		for (int i = 0; i < matrice.length; i++) {
 			for (int j = 0; j < i; j++) {
 				if (matrice[i][j]) {
@@ -457,11 +470,13 @@ public class RandomGraph {
 	
 	public static void main(String[] args) {
 
+		//TODO parse arguments
+		
 		outputFileName = "toto";
-		nbVertex_ASK = 100;
+		nbVertex_ASK = 30;
 		proba_ASK = 1;
-		k_ASK = 50;
-		oriented = false;
+		k_ASK = 5;
+		oriented = true;
 		verbose = false;
 		d_ASK=15;
 		n0_ASK = 20;

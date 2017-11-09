@@ -53,27 +53,6 @@ public final class ManageInput{
 
 	}
 	
-	
-	public static Graph creatGraph(String arg,boolean oriented) {
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(arg));
-			Graph myGraph = new Graph(oriented);
-
-			if (!parseAndFillGraph2(myGraph, br,oriented)) {
-				return null;
-			}
-			br.close();
-			return myGraph;
-
-		} catch (NumberFormatException e) {
-			System.out.println("veuillez entrez un nombre valide");
-		} catch (IOException e) {
-			System.out.println("ERREUR DE FICHIER - LECTURE OU ECRITURE");
-			System.out.println("verifier le nom du fichier d'input");
-		}
-		return null;
-	}
-	
 	public static void missingArgs() {
 		System.out.println("il manque arguments");
         System.out.println("Pour exécuter : java Exo2 [nom_du_fichier]");

@@ -16,11 +16,6 @@ class Graph {
 	
 	boolean oriented;
 	
-	public Graph(boolean oriented) {
-		//this.nodes = new LinkedHashMap<>();
-		this.oriented= oriented;
-	}
-	
 	public Graph(boolean oriented ,int fixedSize) {
 		//this.nodes = new LinkedHashMap<>(defaultSize);
 		this.nodes = new Node[fixedSize];
