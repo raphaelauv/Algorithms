@@ -11,29 +11,55 @@ import java.util.stream.Stream;
 
 class Graph {
 	
-	LinkedHashMap<Integer, Node> mapNodes;
-	boolean isDirected;
+	//LinkedHashMap<Integer, Node> nodes;
+	Node[] nodes;
+	
+	boolean oriented;
 	
 	public Graph(boolean oriented) {
-		this.mapNodes = new LinkedHashMap<>();
-		this.isDirected= oriented;
+		//this.nodes = new LinkedHashMap<>();
+		this.oriented= oriented;
 	}
 	
-	public Graph(boolean oriented ,int defaultSize) {
-		this.mapNodes = new LinkedHashMap<>(defaultSize);
-		this.isDirected= oriented;
+	public Graph(boolean oriented ,int fixedSize) {
+		//this.nodes = new LinkedHashMap<>(defaultSize);
+		this.nodes = new Node[fixedSize];
+		this.oriented= oriented;
 	}
 	
+	
+	public void addEdgeModeArray(int actualID, int neighbourID) {
+		
+		Node actualNode = this.nodes[actualID];
+		if(actualNode==null) {
+			actualNode = new Node(actualID);
+			this.nodes[actualID]= actualNode;
+		}
+		
+		Node neighbourNode = this.nodes[neighbourID];
+		if(neighbourNode==null) {
+			neighbourNode = new Node(neighbourID);
+			this.nodes[neighbourID] = neighbourNode;
+		}
+		
+		actualNode.insertEdge(neighbourNode);
+		if(!this.oriented) {
+			neighbourNode.insertEdge(actualNode);	
+		}
+	}
+	
+	/*
 	public void addEdge(int actualID, int neighbourID,boolean oriented) {
-		Node actualNode = this.mapNodes.computeIfAbsent(actualID,k ->new Node(actualID));
+		Node actualNode = this.nodes.computeIfAbsent(actualID,k ->new Node(actualID));
 		if(actualID!=neighbourID) {
-			Node neighbourNode = this.mapNodes.computeIfAbsent(neighbourID,k ->new Node(neighbourID));
+			Node neighbourNode = this.nodes.computeIfAbsent(neighbourID,k ->new Node(neighbourID));
 			actualNode.insertEdge(neighbourNode);
 			if(!oriented) {
 				neighbourNode.insertEdge(actualNode);	
 			}
 		}
 	}
+	*/
 }
 
 class Node {
@@ -211,19 +237,27 @@ public class ClusteringCoefficient {
 
 	public static ResultGloalAndLocal globalAndLocal(Graph myGraph) {
 		
-		Stream<Node> streamOfNodes =myGraph.mapNodes.values().stream().parallel();
+		Stream<Node> streamOfNodes = Stream.of(myGraph.nodes).parallel();
+		
+		//Stream<Node> streamOfNodes =myGraph.nodes.values().stream().parallel();
 		Stream<ResulGlobal> streamOfResults = streamOfNodes.map(new Let_FindNbTriangles(true));
 		Optional<ResulGlobal> rst=streamOfResults.reduce(new sumResultGlobal());
 
-		Iterator<Node> itNodes = myGraph.mapNodes.values().iterator();
-		Node actualNode = null;
+		
+		
+		//Iterator<Node> itNodes = myGraph.nodes.values().iterator();
+		//Node actualNode = null;
 		
 		int nbTri_X = 0;
 		int degree_X = 0;
 		double sum_cluL_X = 0;
 		
-		while (itNodes.hasNext()) {
-			actualNode = itNodes.next();
+		int nbNodesInGraph = myGraph.nodes.length; //myGraph.nodes.size()
+		
+		//while (itNodes.hasNext()) {
+		
+		for(Node actualNode : myGraph.nodes) {
+			//actualNode = itNodes.next();
 			nbTri_X = actualNode.getNbTriangle() ;
 			actualNode.resetNbTriangle(); 				//TODO necessary ??
 			degree_X = actualNode.neighbours.size();
@@ -233,7 +267,7 @@ public class ClusteringCoefficient {
 			sum_cluL_X += (2 * nbTri_X) / (double) (degree_X * (degree_X - 1));
 			
 		}
-		double oneOnN = 1 / (double) (myGraph.mapNodes.size());
+		double oneOnN = 1 / (double) (nbNodesInGraph);
 		double cluL_G = oneOnN * sum_cluL_X;
 		
 		

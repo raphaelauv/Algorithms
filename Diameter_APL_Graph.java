@@ -148,7 +148,9 @@ public class Diameter_APL_Graph {
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		FixedDataStruckPool dataPool=new FixedDataStruckPool(corePoolSize);
 		
-		Stream<Node> streamOfNodes =myGraph.mapNodes.values().stream().parallel();
+		Stream<Node> streamOfNodes = Stream.of(myGraph.nodes).parallel();
+		
+		//Stream<Node> streamOfNodes =myGraph.nodes.values().stream().parallel();
 		Stream<ResultBFS> streamOfResults = streamOfNodes.map(new Let_BFS(dataPool));
 		Optional<ResultBFS> rst=streamOfResults.reduce(new sumResult());
 		return rst.get();	

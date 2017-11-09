@@ -143,7 +143,7 @@ public class RandomGraph {
 		if (defaultCapacity < 10) {
 			defaultCapacity = 10;
 		}
-
+		actualGraph_nbVertex=n0;
 		for (int i = 0; i < nbVertex; i++) {
 			
 			if(i>=n0) {
@@ -203,7 +203,6 @@ public class RandomGraph {
 						}
 					} else {
 						if (matrice[i].contains(j)) {
-							
 							continue;
 						}
 					}
@@ -329,7 +328,7 @@ public class RandomGraph {
 		Graph graph = new Graph(oriented,nbVertex_ASK);
 		for (int i = 0; i < matrice.length; i++) {
 			for (int j = 0; j < matrice[i].size(); j++) {
-				graph.addEdge(i, matrice[i].get(j), oriented);
+				graph.addEdgeModeArray(i, matrice[i].get(j));
 			}
 		}
 		return graph;
@@ -341,7 +340,7 @@ public class RandomGraph {
 		for (int i = 0; i < matrice.length; i++) {
 			for (int j = 0; j < i; j++) {
 				if (matrice[i][j]) {
-					graph.addEdge(i, j, oriented);
+					graph.addEdgeModeArray(i, j);
 				}
 			}
 		}
@@ -377,6 +376,11 @@ public class RandomGraph {
 				System.out.println(""+(i*100)/k_ASK+"% done");	
 			}
 			
+			actualGraph_nbVertex = 0;
+			actualGraph_nbEdges = 0;
+			actualGraph_degreeMaximum = 0;
+			actualGraph_nbCC = 0;
+			
 			if(flag==flag_ERDOS) {
 				matrice = erdosReny(nbVertex_ASK, proba_ASK);	
 			}else if(flag==flag_BARABASI) {
@@ -392,7 +396,7 @@ public class RandomGraph {
 				emptyGraph = true;
 				continue;
 			}
-			printArrayListMatrice(matrice);
+			//printArrayListMatrice(matrice);
 
 			if (i == 0) {
 				try {
@@ -448,23 +452,21 @@ public class RandomGraph {
 				System.out.println(mma_cluG);
 				System.out.println(mma_cluL);
 			}
-
 		}
-		
 	}
 	
 	public static void main(String[] args) {
 
 		outputFileName = "toto";
-		nbVertex_ASK = 10;
+		nbVertex_ASK = 100;
 		proba_ASK = 1;
-		k_ASK = 1;
-		oriented = true;
+		k_ASK = 50;
+		oriented = false;
 		verbose = false;
-		d_ASK=3;
-		n0_ASK = 4;
+		d_ASK=15;
+		n0_ASK = 20;
 		
-		analyse(flag_BARABASI);
-		// ManageInput.printMemoryEND();
+		analyse(flag_ERDOS);
+		ManageInput.printMemoryEND();
 	}
 }

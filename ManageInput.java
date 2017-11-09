@@ -40,8 +40,9 @@ public final class ManageInput{
 			try {
 				actualId = Integer.parseInt(arrayOfLine[0]);
 				actualIdNeighbour = Integer.parseInt(arrayOfLine[1]);
-
-				graph.addEdge(actualId, actualIdNeighbour,oriented);
+				
+				graph.addEdgeModeArray(actualId, actualIdNeighbour);
+				//graph.addEdge(actualId, actualIdNeighbour,oriented);
 			}catch(NumberFormatException e) {
 				System.out.println("ERREUR ligne "+nbLine+" format Invalide");
 				return false;
