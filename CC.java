@@ -63,25 +63,34 @@ class CC {
 	}
 }
 
-class Let_BFS_CC {
 
+
+class Let_BFS_CC {
+	
 	public static int nbCCinGraph(Graph graph) {
 
 		int id_CC_Actual = 0;
 		int nb_Nodes_seen = 0;
 
 		int nb_CC = 0;
-		int nb_NodesInGraph = graph.nodes.length; //graph.nodes.size();
+		int nb_NodesInGraph = graph.size; //graph.nodes.size();
 
 		CC actualCC = null;
 
 		Queue<Node> stack = new LinkedList<>();
 		//Iterator<Node> iter = graph.nodes.values().iterator();
 
-		int index=0;
 		
+		int index=0;
 		Node actualNode = graph.nodes[index]; //iter.next();
-
+		while(actualNode == null && index<nb_NodesInGraph) {
+			index++;
+			actualNode = graph.nodes[index]; 
+		}
+		
+		if(actualNode==null) {
+			return 0;//empty graph
+		}
 		stack.add(actualNode);
 		actualNode.alreadyAddToStackForVisite = true;
 
@@ -99,6 +108,8 @@ class Let_BFS_CC {
 			while (!stack.isEmpty()) {
 
 				actualNode = stack.poll();
+				
+				
 				nb_Nodes_seen++;
 
 				for (Node aNeighbour : actualNode.neighbours) {
@@ -146,7 +157,7 @@ class Let_BFS_CC {
 				index++;
 				actualNode = graph.nodes[index]; //(Node) iter.next();
 
-			} while (actualNode.alreadyAddToStackForVisite);
+			} while (actualNode==null || actualNode.alreadyAddToStackForVisite);
 			// System.out.println("FIN CC , CHANGEMENT");
 
 			// Ajouter premier sommet d'une autre composante connexe

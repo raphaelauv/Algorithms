@@ -22,12 +22,12 @@ class ArrayListInteger extends ArrayList<Integer>{
 
 public class RandomGraph {
 
-	private final static int flag_ERDOS = 1;
-	private final static int flag_BARABASI = 2;
+	public final static int flag_ERDOS = 1;
+	public final static int flag_BARABASI = 2;
 	
 	public static String outputFileName;
 	public static int nbVertex_ASK;
-	public static int proba_ASK;;
+	public static double proba_ASK;;
 	public static int k_ASK;
 	public static int d_ASK;
 	public static int n0_ASK;
@@ -39,6 +39,7 @@ public class RandomGraph {
 	public static int actualGraph_degreeMaximum = 0;
 	public static int actualGraph_nbCC = 0;
 	public static boolean emptyGraph = true;
+	public static int flag_ask;
 	
 	
 	public static void resetGraphValues() {
@@ -48,7 +49,7 @@ public class RandomGraph {
 	}
 	
 	//public static boolean[][] erdosReny(int nbVertex, int p) {
-	public static ArrayList<Integer>[] erdosReny(int nbVertex, int p) {
+	public static ArrayList<Integer>[] erdosReny(int nbVertex, double p) {
 
 		resetGraphValues();
 		
@@ -66,29 +67,28 @@ public class RandomGraph {
 
 		for (int i = 0; i < nbVertex; i++) {
 
-			if (p == 0) {
-				continue;
-			}
-
 			int j = i+1;				//a <-> b is the same than b <-> a , so we skip
 			if(oriented) {	
 				j=0;
 			}
 			
 			//matrice[i] = new boolean[i];
-			defaultCapacity = (nbVertex-j ) * (1/p); //to init the array at is probably futur filled size
+			defaultCapacity = (int) ((nbVertex-j ) * p); //to init the array at is probably futur filled size
 			if(defaultCapacity<10) {
 				defaultCapacity =10;
 			}
 			matrice[i] = new ArrayListInteger(defaultCapacity);
-			
+
+			if (p == 0) {
+				continue;
+			}
 			for (; j < nbVertex; j++) {
 				
 				if(i==j) {
 					continue;
 				}
 				
-				if (rd.nextInt(p) == 0) {
+				if (Math.random() < p) {
 					emptyGraph = false;
 					matrice[i].add(j);
 					//matrice[i][j] = true;
@@ -301,9 +301,14 @@ public class RandomGraph {
 		String ligneJ = "";
 		byte[] byteJ = ligneJ.getBytes();
 		byte[] jumpLine = "\n".getBytes();
+		if(emptyGraph) {
+			out.write("#empty Graph".getBytes());
+			return;
+		}
 		if(oriented) {
 			out.write("#oriented Graph\n".getBytes());
 		}
+		
 		for (int i = 0; i < matrice.length; i++) {
 			for (int j = 0; j < matrice[i].size(); j++) {
 				ligneJ = "" + i + " " + matrice[i].get(j);
@@ -361,7 +366,7 @@ public class RandomGraph {
 	}
 
 	
-	public static void analyse(int flag) {
+	public static void performRandomGraph(int flag) {
 		
 		Graph myGraph;
 		ResultGloalAndLocal rstLG = null;
@@ -403,12 +408,6 @@ public class RandomGraph {
 				return;
 			}
 
-
-			if (emptyGraph) {
-				System.out.println("GRAPH is EMPTY");
-				emptyGraph = true;
-				continue;
-			}
 			//printArrayListMatrice(matrice);
 
 			if (i == 0) {
@@ -423,14 +422,17 @@ public class RandomGraph {
 					return;
 				}
 			}
+			if (k_ASK==1 && emptyGraph) {
+				System.out.println("GRAPH is EMPTY");
+			}
 
+			
 			myGraph = createGraphFromArrayListMatrice(matrice, oriented);
-
-			// ManageInput.printMemoryStart();
-
 			rstBFS = Diameter_APL_Graph.diameter_and_APL_ofGraph_Stream(myGraph);
 			rstLG = ClusteringCoefficient.globalAndLocal(myGraph);
 			actualGraph_nbCC = Let_BFS_CC.nbCCinGraph(myGraph);
+		
+
 			
 			if (k_ASK == 1) {
 				System.out.println("nbVertex "+actualGraph_nbVertex);
@@ -441,16 +443,18 @@ public class RandomGraph {
 				System.out.println(rstLG);			
 				return;
 			} else {
-				mma_nbVertex.add(actualGraph_nbVertex);
-				mma_nbEdges.add(actualGraph_nbEdges);
-				mma_maxDegree.add(actualGraph_degreeMaximum);
-				mma_nbCC.add(actualGraph_nbCC);
-				mma_diameter.add(rstBFS.diameter);
-				mma_APL.add(rstBFS.getAPL());
-				mma_nbTri.add(rstLG.nbTri);
-				mma_nbV.add(rstLG.nbV);
-				mma_cluG.add(rstLG.cluG);
-				mma_cluL.add(rstLG.cluL);
+				if(!emptyGraph) {
+					mma_nbVertex.add(actualGraph_nbVertex);
+					mma_nbEdges.add(actualGraph_nbEdges);
+					mma_maxDegree.add(actualGraph_degreeMaximum);
+					mma_nbCC.add(actualGraph_nbCC);
+					mma_diameter.add(rstBFS.diameter);
+					mma_APL.add(rstBFS.getAPL());
+					mma_nbTri.add(rstLG.nbTri);
+					mma_nbV.add(rstLG.nbV);
+					mma_cluG.add(rstLG.cluG);
+					mma_cluL.add(rstLG.cluL);
+				}
 			}
 			
 			if(i==k_ASK-1) {
@@ -470,18 +474,32 @@ public class RandomGraph {
 	
 	public static void main(String[] args) {
 
-		//TODO parse arguments
 		
+		if (args.length < 1) {
+			ManageInput.incorrectArgs();
+			return;
+		}
+		try {
+			ManageInput.analyseArgs(args);
+		}catch (Exception e) {
+			ManageInput.incorrectArgs();
+			return;
+		}
+		
+		
+		/*
 		outputFileName = "toto";
 		nbVertex_ASK = 30;
-		proba_ASK = 1;
-		k_ASK = 5;
-		oriented = true;
+		proba_ASK = 0.1;
+		k_ASK = 1000;
+		oriented = false;
 		verbose = false;
-		d_ASK=15;
+		d_ASK = 15;
 		n0_ASK = 20;
+		flag_ask = flag_ERDOS;
+		*/
 		
-		analyse(flag_ERDOS);
+		performRandomGraph(flag_ask);
 		ManageInput.printMemoryEND();
 	}
 }

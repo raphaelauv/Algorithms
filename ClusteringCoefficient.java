@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.LongAdder;
@@ -13,7 +14,7 @@ class Graph {
 	
 	//LinkedHashMap<Integer, Node> nodes;
 	Node[] nodes;
-	
+	int size;
 	boolean oriented;
 	
 	public Graph(boolean oriented ,int fixedSize) {
@@ -29,12 +30,14 @@ class Graph {
 		if(actualNode==null) {
 			actualNode = new Node(actualID);
 			this.nodes[actualID]= actualNode;
+			size++;
 		}
 		
 		Node neighbourNode = this.nodes[neighbourID];
 		if(neighbourNode==null) {
 			neighbourNode = new Node(neighbourID);
 			this.nodes[neighbourID] = neighbourNode;
+			size++;
 		}
 		
 		actualNode.insertEdge(neighbourNode);
@@ -122,7 +125,12 @@ class ResultGloalAndLocal{
 			this.nbTri = rst.nbTri;
 			this.cluG =  (3 * nbTri) /(double)nbV;
 			this.cluL = cluL;
+			
+			if(Double.isNaN(cluG)) {
+				cluG=0;
+			}
 		}
+		
 	}
 	
 	@Override
@@ -232,11 +240,11 @@ public class ClusteringCoefficient {
 
 	public static ResultGloalAndLocal globalAndLocal(Graph myGraph) {
 		
-		Stream<Node> streamOfNodes = Stream.of(myGraph.nodes).parallel();
+		Stream<Node> streamOfNodes = Stream.of(myGraph.nodes).parallel().filter(Objects::nonNull);
 		
 		//Stream<Node> streamOfNodes =myGraph.nodes.values().stream().parallel();
 		Stream<ResulGlobal> streamOfResults = streamOfNodes.map(new Let_FindNbTriangles(true));
-		Optional<ResulGlobal> rst=streamOfResults.reduce(new sumResultGlobal());
+		ResulGlobal rst=streamOfResults.reduce(new ResulGlobal(0,0),new sumResultGlobal());
 
 		
 		
@@ -247,12 +255,17 @@ public class ClusteringCoefficient {
 		int degree_X = 0;
 		double sum_cluL_X = 0;
 		
-		int nbNodesInGraph = myGraph.nodes.length; //myGraph.nodes.size()
+		int nbNodesInGraph = myGraph.size; //myGraph.nodes.size()
 		
 		//while (itNodes.hasNext()) {
 		
 		for(Node actualNode : myGraph.nodes) {
 			//actualNode = itNodes.next();
+			
+			if(actualNode==null) {
+				continue;
+			}
+			
 			nbTri_X = actualNode.getNbTriangle() ;
 			actualNode.resetNbTriangle(); 				//TODO necessary ??
 			degree_X = actualNode.neighbours.size();
@@ -264,8 +277,11 @@ public class ClusteringCoefficient {
 		}
 		double oneOnN = 1 / (double) (nbNodesInGraph);
 		double cluL_G = oneOnN * sum_cluL_X;
+		if(Double.isNaN(cluL_G)) {
+			cluL_G = 0;
+		}
 		
 		
-		return new ResultGloalAndLocal(rst.get(), cluL_G);
+		return new ResultGloalAndLocal(rst, cluL_G);
 	}
 }

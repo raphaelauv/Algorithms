@@ -20,10 +20,14 @@ TP avec les 2 extensions
 
 ### 3. EXECUTION
 
-	java RandomGraph -erdos [n] [p] [OutputFileName] [k] [-o]  
-	java RandomGraph -barabasi [d] [n0] [n] [OutputFileName] [k] [-o]
+	java RandomGraph -e [n] [p] [OutputFileName] [k] [o]  
+	java RandomGraph -b [d] [n0] [n] [OutputFileName] [k] [o]
+	-e
 	[k] is optional , number of repetition to get Min , MAx and Average result
-	[-o] is optional ( by default non oriented , with -o it's oriented graph)
+	[o] is optional ( by default non oriented , with o it's oriented graph)
+
+	exemple : e 10 0.5 outFile1 10 o
+			  d 3 10 20 outFile2
 
  
 

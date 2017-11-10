@@ -1,8 +1,18 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Random;
+
+import com.sun.xml.internal.ws.dump.LoggingDumpTube.Position;
+
+class IncorrectArgs extends Exception{
+	
+}
 
 public final class ManageInput{
+	
+	
+	
 	
 	private static void printMemory(String msg) {
 		System.out.println(msg+" | Mémoire allouée : " +
@@ -14,7 +24,7 @@ public final class ManageInput{
 	}
 	
 	public static void printMemoryEND() {
-		printMemory("FIN PARCOUR");
+		printMemory("FIN ");
 	}
 	
 	public static boolean parseAndFillGraph2(Graph graph, BufferedReader file,boolean oriented) throws IOException {
@@ -53,9 +63,90 @@ public final class ManageInput{
 
 	}
 	
-	public static void missingArgs() {
-		System.out.println("il manque arguments");
-        System.out.println("Pour exécuter : java Exo2 [nom_du_fichier]");
+	public static void incorrectArgs() {
+		System.out.println("arguments incorect");
+        System.out.println("Pour exécuter :\njava RandomGraph -e [n] [p] [OutputFileName] [k] [o] ");
+        System.out.println("java RandomGraph -b [d] [n0] [n] [OutputFileName] [k] [o]");
+        System.out.println("------------------\n[k] is optional , number of repetition to get Min , MAx and Average result\n" + 
+        		"[-o] is optional ( by default non oriented , with o it's oriented graph)");
 	}
+	
+	
+	public static int getInt(String s) throws NumberFormatException{
+		return Integer.parseInt(s);	
+	}
+	
+	public static double getDouble(String s) throws NumberFormatException{
+		return Double.parseDouble(s);
+	}
+	
+	
+	public static void correctArgs()throws IncorrectArgs {
+		if(RandomGraph.flag_ask==RandomGraph.flag_ERDOS) {
+			if(RandomGraph.proba_ASK<0 || RandomGraph.proba_ASK>1) {
+				throw new IncorrectArgs();
+			}
+			if(RandomGraph.nbVertex_ASK<0) {
+				throw new IncorrectArgs();
+			}
+		}else if(RandomGraph.flag_ask==RandomGraph.flag_ERDOS) {
+			if(RandomGraph.d_ASK<0 ||RandomGraph.d_ASK>RandomGraph.n0_ASK || RandomGraph.n0_ASK > RandomGraph.nbVertex_ASK ) {
+				throw new IncorrectArgs();
+			}
+		}else {
+			
+		}
+	}
+	
+	public static void analyseArgs(String[] args) throws NumberFormatException, ArrayIndexOutOfBoundsException, IncorrectArgs {
 
+		int positionInArgs = 0;
+
+		if (args[0].equals("e")) {
+			if (args.length < 3 + 1) {
+				throw new ArrayIndexOutOfBoundsException();
+			}
+			RandomGraph.flag_ask = RandomGraph.flag_ERDOS;
+			RandomGraph.nbVertex_ASK = getInt(args[1]);
+			RandomGraph.proba_ASK = getDouble(args[2]);
+			positionInArgs = 3;
+		} else if (args[0].equals("b")) {
+			if (args.length < 5 + 1) {
+				throw new ArrayIndexOutOfBoundsException();
+			}
+			RandomGraph.flag_ask = RandomGraph.flag_BARABASI;
+			RandomGraph.d_ASK = getInt(args[1]);
+			RandomGraph.n0_ASK = getInt(args[2]);
+			RandomGraph.nbVertex_ASK = getInt(args[3]);
+			positionInArgs = 4;
+		} else {
+			throw new IncorrectArgs();
+		}
+		correctArgs();
+		
+		RandomGraph.outputFileName = args[positionInArgs];
+		positionInArgs++;
+		
+
+		if (args.length > positionInArgs) {
+			RandomGraph.k_ASK = getInt(args[positionInArgs]);
+			positionInArgs++;
+		}else {
+			RandomGraph.k_ASK=1;
+		}
+
+		if (args.length > positionInArgs) {
+			if (args[positionInArgs].equals("o")) {
+				RandomGraph.oriented = true;
+				positionInArgs++;
+			}else {
+				throw new IncorrectArgs();
+			}
+			
+			if(args.length>positionInArgs) {
+				throw new IncorrectArgs();
+			}
+		}
+		
+	}
 }

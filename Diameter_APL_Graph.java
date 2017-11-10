@@ -1,14 +1,13 @@
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Stream;
-
-
 
 class FixedDataStruckPool{
 	private int nbStruck;
@@ -71,6 +70,9 @@ class ResultBFS {
 	}
 	public double getAPL() {
 		APL = sumOfallVertices /((double) nbVertices);
+		if(Double.isNaN(APL)) {
+			APL=0;
+		}
 		return APL;
 	}
 }
@@ -114,6 +116,7 @@ class Let_BFS implements Function<Node,ResultBFS>{
 		Node tmpNode;
 		while (!stack.isEmpty()) {
 			tmpNode = stack.poll();
+			
 			actualDistance=nodesAlreadySeen.get(tmpNode);
 			if(actualDistance>maxDistance_of_D) {
 				maxDistance_of_D++;
@@ -142,12 +145,12 @@ public class Diameter_APL_Graph {
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		FixedDataStruckPool dataPool=new FixedDataStruckPool(corePoolSize);
 		
-		Stream<Node> streamOfNodes = Stream.of(myGraph.nodes).parallel();
+		Stream<Node> streamOfNodes = Stream.of(myGraph.nodes).parallel().filter(Objects::nonNull);
 		
 		//Stream<Node> streamOfNodes =myGraph.nodes.values().stream().parallel();
 		Stream<ResultBFS> streamOfResults = streamOfNodes.map(new Let_BFS(dataPool));
-		Optional<ResultBFS> rst=streamOfResults.reduce(new sumResult());
-		return rst.get();	
+		ResultBFS rst=streamOfResults.reduce(new ResultBFS(0,0,0),new sumResult());
+		return rst;	
 	}
 
 }
