@@ -12,17 +12,14 @@ import java.util.stream.Stream;
 
 class Graph {
 	
-	//LinkedHashMap<Integer, Node> nodes;
 	Node[] nodes;
 	int size;
 	boolean oriented;
 	
 	public Graph(boolean oriented ,int fixedSize) {
-		//this.nodes = new LinkedHashMap<>(defaultSize);
 		this.nodes = new Node[fixedSize];
 		this.oriented= oriented;
 	}
-	
 	
 	public void addEdgeModeArray(int actualID, int neighbourID) {
 		
@@ -67,6 +64,7 @@ class Node {
 
 	final int id;
 	Collection<Node> neighbours;
+	
 	private LongAdder nbInsideTriangle;						//only for AverageClusteringCoefficient
 	
 	public Node(int id) {
@@ -242,25 +240,16 @@ public class ClusteringCoefficient {
 		
 		Stream<Node> streamOfNodes = Stream.of(myGraph.nodes).parallel().filter(Objects::nonNull);
 		
-		//Stream<Node> streamOfNodes =myGraph.nodes.values().stream().parallel();
 		Stream<ResulGlobal> streamOfResults = streamOfNodes.map(new Let_FindNbTriangles(true));
-		ResulGlobal rst=streamOfResults.reduce(new ResulGlobal(0,0),new sumResultGlobal());
+		Optional<ResulGlobal> rst=streamOfResults.reduce(new sumResultGlobal());
 
-		
-		
-		//Iterator<Node> itNodes = myGraph.nodes.values().iterator();
-		//Node actualNode = null;
-		
 		int nbTri_X = 0;
 		int degree_X = 0;
 		double sum_cluL_X = 0;
 		
-		int nbNodesInGraph = myGraph.size; //myGraph.nodes.size()
-		
-		//while (itNodes.hasNext()) {
+		int nbNodesInGraph = myGraph.size;
 		
 		for(Node actualNode : myGraph.nodes) {
-			//actualNode = itNodes.next();
 			
 			if(actualNode==null) {
 				continue;
@@ -280,8 +269,11 @@ public class ClusteringCoefficient {
 		if(Double.isNaN(cluL_G)) {
 			cluL_G = 0;
 		}
+		if(rst.isPresent()) {
+			return new ResultGloalAndLocal(rst.get(), cluL_G);
+		}else {
+			return new ResultGloalAndLocal(new ResulGlobal(0, 0), cluL_G);
+		}
 		
-		
-		return new ResultGloalAndLocal(rst, cluL_G);
 	}
 }

@@ -408,9 +408,12 @@ public class RandomGraph {
 				return;
 			}
 
+			
+			
 			//printArrayListMatrice(matrice);
 
 			if (i == 0) {
+				ManageInput.printMemory("AfterCreation Adjacency list ");
 				try {
 					Path file2 = Paths.get("./" + outputFileName);
 					OutputStream out = new BufferedOutputStream(Files.newOutputStream(file2, CREATE, TRUNCATE_EXISTING));
@@ -432,7 +435,9 @@ public class RandomGraph {
 			rstLG = ClusteringCoefficient.globalAndLocal(myGraph);
 			actualGraph_nbCC = Let_BFS_CC.nbCCinGraph(myGraph);
 		
-
+			if(i==0) {
+				ManageInput.printMemory("After Analyse ");
+			}
 			
 			if (k_ASK == 1) {
 				System.out.println("nbVertex "+actualGraph_nbVertex);
@@ -474,11 +479,6 @@ public class RandomGraph {
 	
 	public static void main(String[] args) {
 
-		
-		if (args.length < 1) {
-			ManageInput.incorrectArgs();
-			return;
-		}
 		try {
 			ManageInput.analyseArgs(args);
 		}catch (Exception e) {
@@ -500,6 +500,6 @@ public class RandomGraph {
 		*/
 		
 		performRandomGraph(flag_ask);
-		ManageInput.printMemoryEND();
+		ManageInput.printMemory("END ");
 	}
 }

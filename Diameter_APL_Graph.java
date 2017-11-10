@@ -147,10 +147,14 @@ public class Diameter_APL_Graph {
 		
 		Stream<Node> streamOfNodes = Stream.of(myGraph.nodes).parallel().filter(Objects::nonNull);
 		
-		//Stream<Node> streamOfNodes =myGraph.nodes.values().stream().parallel();
 		Stream<ResultBFS> streamOfResults = streamOfNodes.map(new Let_BFS(dataPool));
-		ResultBFS rst=streamOfResults.reduce(new ResultBFS(0,0,0),new sumResult());
-		return rst;	
+		Optional<ResultBFS> rst=streamOfResults.reduce(new sumResult());
+		if(rst.isPresent()) {
+			return rst.get();
+		}else {
+			return new ResultBFS(0, 0, 0);
+		}
+			
 	}
 
 }

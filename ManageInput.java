@@ -14,18 +14,11 @@ public final class ManageInput{
 	
 	
 	
-	private static void printMemory(String msg) {
+	protected static void printMemory(String msg) {
 		System.out.println(msg+" | Mémoire allouée : " +
 		(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) + "octets");
 	}
 	
-	public static void printMemoryStart() {
-		printMemory("FIN LECTURE FICHIER + CREATION GRAPH");
-	}
-	
-	public static void printMemoryEND() {
-		printMemory("FIN ");
-	}
 	
 	public static boolean parseAndFillGraph2(Graph graph, BufferedReader file,boolean oriented) throws IOException {
 		String line = "";
@@ -100,6 +93,10 @@ public final class ManageInput{
 	
 	public static void analyseArgs(String[] args) throws NumberFormatException, ArrayIndexOutOfBoundsException, IncorrectArgs {
 
+		if (args.length < 1) {
+			throw new IncorrectArgs();
+		}
+		
 		int positionInArgs = 0;
 
 		if (args[0].equals("e")) {
