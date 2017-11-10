@@ -37,9 +37,10 @@ TP avec les 2 extensions
 
 ##### 4.1.1 ErdosReny
 
-		O(m')
+		Ө(m')
 		-
-	  	m' : number of vertex possible ( n² if oriented , else n²/2)
+		n : number of nodes
+	  	m' : number of vertex possible ( n² (if oriented)  or  n²/2 (if not oriented) )
 
 
 ##### 4.1.1 BarabasiAlbert
@@ -56,18 +57,17 @@ TP avec les 2 extensions
 	
 ##### 4.2.1 ErdosReny
 	
-		Worst case (complete graph) : O(m')
-		
-		Average case : o( m'/p )
+		O( Array(m) + n')
 		-
-		m' : number of vertex possible
-		p : probability
+		m' : number of Edges
+		n' : number of VertexAsked
+		Array(m) : amorted case -> equal to m
 
 
 ##### 4.2.1 BarabasiAlbert
 	
 	
-		O(n0' + (n'*d) ) 
+		Ө( n0' + (n'*d) ) 
 		
 		n : number of nodes
 		m : number of edges
