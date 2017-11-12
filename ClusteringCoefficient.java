@@ -15,7 +15,7 @@ class Graph {
 	Node[] nodes;
 	int size;
 	boolean oriented;
-	
+	int nbEdges;
 	public Graph(boolean oriented ,int fixedSize) {
 		this.nodes = new Node[fixedSize];
 		this.oriented= oriented;
@@ -38,6 +38,7 @@ class Graph {
 		}
 		
 		actualNode.insertEdge(neighbourNode);
+		nbEdges++;
 		if(!this.oriented) {
 			neighbourNode.insertEdge(actualNode);	
 		}

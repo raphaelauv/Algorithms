@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Random;
 
 class ArrayListInteger extends ArrayList<Integer>{
 	public ArrayListInteger(int capacity) {
@@ -33,46 +32,26 @@ public class RandomGraph {
 	public static int n0_ASK;
 	public static boolean oriented;
 	public static boolean verbose;
-	
-	public static int actualGraph_nbVertex = 0;
-	public static int actualGraph_nbEdges = 0;
-	public static int actualGraph_degreeMaximum = 0;
-	public static int actualGraph_nbCC = 0;
 	public static boolean emptyGraph = true;
 	public static int flag_ask;
 	
-	
-	public static void resetGraphValues() {
-		actualGraph_nbVertex = 0;
-		actualGraph_nbEdges = 0;
-		actualGraph_degreeMaximum = 0;
-	}
-	
-	//public static boolean[][] erdosReny(int nbVertex, int p) {
 	public static ArrayList<Integer>[] erdosReny(int nbVertex, double p) {
 
-		resetGraphValues();
-		
+			
 		int[] degrees = new int[nbVertex];		//keep trace of degree of each node
-		Arrays.fill(degrees, -1);				// degree at -1 mean the node do not exist yet
-		
+		Arrays.fill(degrees, -1);				// degree at -1 mean the node do not exist yet		
 		int maxDegree = 0;
 		int defaultCapacity;	
-		
-
-		//boolean[][] matrice = new boolean[nbVertex][];
 		ArrayList<Integer>[] matrice = new ArrayListInteger[nbVertex]; // Adjacency list
-
-		Random rd = new Random();
+	
 
 		for (int i = 0; i < nbVertex; i++) {
 
 			int j = i+1;				//a <-> b is the same than b <-> a , so we skip
 			if(oriented) {	
-				j=0;
+				j=0;	
 			}
-			
-			//matrice[i] = new boolean[i];
+
 			defaultCapacity = (int) ((nbVertex-j ) * p); //to init the array at is probably futur filled size
 			if(defaultCapacity<10) {
 				defaultCapacity =10;
@@ -91,21 +70,16 @@ public class RandomGraph {
 				if (Math.random() < p) {
 					emptyGraph = false;
 					matrice[i].add(j);
-					//matrice[i][j] = true;
 
 					if(degrees[i]==-1) {
-						actualGraph_nbVertex++;
 						degrees[i]=0;
 					}
 					
 					if(!oriented) {
 						if(degrees[j]==-1) {
-							actualGraph_nbVertex++;
 							degrees[j]=0;
 						}
 					}
-					
-					actualGraph_nbEdges++;
 
 					degrees[i]++;
 					if (degrees[i] > maxDegree) {
@@ -121,14 +95,12 @@ public class RandomGraph {
 				}
 			}
 		}
-		actualGraph_degreeMaximum = maxDegree;
 		return matrice;
 	}
 
 	public static ArrayList<Integer>[] barabasiAlbert(int d, int n0, int nbVertex) {
 
-		resetGraphValues();
-		
+
 		ArrayList<Integer>[] matrice = new ArrayListInteger[nbVertex]; //Adjacency list
 		int[] degreesOUT = new int[nbVertex];
 		Arrays.fill(degreesOUT, -1);
@@ -150,7 +122,7 @@ public class RandomGraph {
 		if (defaultCapacity < 10) {
 			defaultCapacity = 10;
 		}
-		actualGraph_nbVertex=n0;
+		
 		for (int i = 0; i < nbVertex; i++) {
 			
 			if(i>=n0) {
@@ -178,13 +150,9 @@ public class RandomGraph {
 
 					matrice[i].add(j);
 				}
-
-			}
-			
+			}			
 		}
 
-		
-	
 		double proba = 0;
 
 		int myDegree = 0;
@@ -229,16 +197,14 @@ public class RandomGraph {
 
 						nbAllDegrees++;
 						matrice[i].add(j);
-						actualGraph_nbEdges++;
+						
 
 						
 						if(degreesOUT[i]==-1) {
-							actualGraph_nbVertex++;
 							degreesOUT[i]=0;
 						}
 						if(!oriented) {
 							if(degreesOUT[j]==-1) {
-								actualGraph_nbVertex++;
 								degreesOUT[j]=0;
 								degreesIN[j]=0;
 							}
@@ -262,9 +228,7 @@ public class RandomGraph {
 
 			}
 		}
-
 		emptyGraph = false;
-		actualGraph_degreeMaximum = maxDegree;
 		return matrice;
 	}
 
@@ -366,11 +330,12 @@ public class RandomGraph {
 	}
 
 	
-	public static void performRandomGraph(int flag) {
+	public static void performRandomGraph() {
 		
 		Graph myGraph;
 		ResultGloalAndLocal rstLG = null;
 		ResultBFS rstBFS = null;
+		RstBFS_CC rstCC = null;
 
 		INT_MinMaxAverage mma_nbVertex = new INT_MinMaxAverage(k_ASK, "nbVertex ");
 		INT_MinMaxAverage mma_nbEdges = new INT_MinMaxAverage(k_ASK, "nbEdge   ");
@@ -394,21 +359,14 @@ public class RandomGraph {
 				System.out.println(""+(i*100)/k_ASK+"% done");	
 			}
 			
-			actualGraph_nbVertex = 0;
-			actualGraph_nbEdges = 0;
-			actualGraph_degreeMaximum = 0;
-			actualGraph_nbCC = 0;
-			
-			if(flag==flag_ERDOS) {
+			if(flag_ask==flag_ERDOS) {
 				matrice = erdosReny(nbVertex_ASK, proba_ASK);	
-			}else if(flag==flag_BARABASI) {
+			}else if(flag_ask==flag_BARABASI) {
 				matrice = barabasiAlbert(d_ASK, n0_ASK, nbVertex_ASK);
 			}else {
 				System.out.println("ERREUR FLAG");
 				return;
 			}
-
-			
 			
 			//printArrayListMatrice(matrice);
 
@@ -433,26 +391,24 @@ public class RandomGraph {
 			myGraph = createGraphFromArrayListMatrice(matrice, oriented);
 			rstBFS = Diameter_APL_Graph.diameter_and_APL_ofGraph_Stream(myGraph);
 			rstLG = ClusteringCoefficient.globalAndLocal(myGraph);
-			actualGraph_nbCC = Let_BFS_CC.nbCCinGraph(myGraph);
+			rstCC = Let_BFS_CC.nbCCinGraph(myGraph);
+			
 		
 			if(i==0) {
 				ManageInput.printMemory("After Analyse ");
 			}
 			
 			if (k_ASK == 1) {
-				System.out.println("nbVertex "+actualGraph_nbVertex);
-				System.out.println("nbEdge "+actualGraph_nbEdges);
-				System.out.println("Max degree "+actualGraph_degreeMaximum);
-				System.out.println("nbCC "+actualGraph_nbCC);
+				System.out.println(rstCC);
 				System.out.println(rstBFS);
 				System.out.println(rstLG);			
 				return;
 			} else {
 				if(!emptyGraph) {
-					mma_nbVertex.add(actualGraph_nbVertex);
-					mma_nbEdges.add(actualGraph_nbEdges);
-					mma_maxDegree.add(actualGraph_degreeMaximum);
-					mma_nbCC.add(actualGraph_nbCC);
+					mma_nbVertex.add(rstCC.nbVertex);
+					mma_nbEdges.add(rstCC.nbEdges);
+					mma_maxDegree.add(rstCC.maxDegree);
+					mma_nbCC.add(rstCC.nbCC);
 					mma_diameter.add(rstBFS.diameter);
 					mma_APL.add(rstBFS.getAPL());
 					mma_nbTri.add(rstLG.nbTri);
@@ -499,7 +455,7 @@ public class RandomGraph {
 		flag_ask = flag_ERDOS;
 		*/
 		
-		performRandomGraph(flag_ask);
+		performRandomGraph();
 		ManageInput.printMemory("END ");
 	}
 }

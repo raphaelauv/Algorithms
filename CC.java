@@ -64,14 +64,33 @@ class CC {
 }
 
 
+class RstBFS_CC{
+	int nbCC;
+	int maxDegree;
+	int nbVertex;
+	int nbEdges;
+	public RstBFS_CC(int nbCC, int maxDegree, int nbVertex, int nbEdges) {
+		super();
+		this.nbCC = nbCC;
+		this.maxDegree = maxDegree;
+		this.nbVertex = nbVertex;
+		this.nbEdges = nbEdges;
+	}
+	@Override
+	public String toString() {
+		return "nbCC : "+nbCC+"\nmaxDegree :"+maxDegree+"\nnbVertex : "+nbVertex+"\nbEdges : "+nbEdges;
+	}
+}
 
 class Let_BFS_CC {
 	
-	public static int nbCCinGraph(Graph graph) {
+	public static RstBFS_CC nbCCinGraph(Graph graph) {
 
 		int id_CC_Actual = 0;
 		int nb_Nodes_seen = 0;
-
+		
+		
+		
 		int nb_CC = 0;
 		int nb_NodesInGraph = graph.size; //graph.nodes.size();
 
@@ -89,8 +108,10 @@ class Let_BFS_CC {
 		}
 		
 		if(actualNode==null) {
-			return 0;//empty graph
+			return new RstBFS_CC(0, 0, 0, 0);
 		}
+		int maxDegreeSeen =0;
+		
 		stack.add(actualNode);
 		actualNode.alreadyAddToStackForVisite = true;
 
@@ -108,6 +129,10 @@ class Let_BFS_CC {
 			while (!stack.isEmpty()) {
 
 				actualNode = stack.poll();
+				int degree = actualNode.neighbours.size();
+				if(degree>maxDegreeSeen) {
+					maxDegreeSeen=degree;
+				}
 				
 				
 				nb_Nodes_seen++;
@@ -144,6 +169,7 @@ class Let_BFS_CC {
 					if (!aNeighbour.alreadyAddToStackForVisite) {
 
 						stack.add(aNeighbour);
+						
 						aNeighbour.alreadyAddToStackForVisite = true;
 					}
 
@@ -164,6 +190,7 @@ class Let_BFS_CC {
 			stack.add(actualNode);
 			actualNode.alreadyAddToStackForVisite = true;
 		}
-		return nb_CC;
+		return new RstBFS_CC(nb_CC,maxDegreeSeen,nb_NodesInGraph,graph.nbEdges);
+		
 	}
 }

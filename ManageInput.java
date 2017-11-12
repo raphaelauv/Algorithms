@@ -1,18 +1,10 @@
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.Random;
-
-import com.sun.xml.internal.ws.dump.LoggingDumpTube.Position;
 
 class IncorrectArgs extends Exception{
-	
 }
 
 public final class ManageInput{
-	
-	
-	
 	
 	protected static void printMemory(String msg) {
 		System.out.println(msg+" | Mémoire allouée : " +
@@ -61,7 +53,9 @@ public final class ManageInput{
         System.out.println("Pour exécuter :\njava RandomGraph -e [n] [p] [OutputFileName] [k] [o] ");
         System.out.println("java RandomGraph -b [d] [n0] [n] [OutputFileName] [k] [o]");
         System.out.println("------------------\n[k] is optional , number of repetition to get Min , MAx and Average result\n" + 
-        		"[-o] is optional ( by default non oriented , with o it's oriented graph)");
+        		"[o] is optional ( by default non oriented , with o it's oriented graph)");
+        System.out.println("exemple : ");
+        System.out.println("e 10 0.5 outFile1 10 o\nd 3 10 20 outFile2 1 o");
 	}
 	
 	
