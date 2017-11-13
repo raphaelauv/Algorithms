@@ -6,3 +6,4 @@
 
 ### 2 ClusteringCoefficient, Diameter , average path length of GRAPH
 
+### 3 Random Graph ErdosReny BarabasiAlbert and associated informations
