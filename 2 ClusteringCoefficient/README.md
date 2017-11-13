@@ -1,6 +1,3 @@
-M2 INFORMATIQUE PARIS DIDEROT - 2017/2018
-AUVERT RAPHAEL
-
 # TP2 Clustering Coefficient (Global and Local) , Diameter and Average path length (APL) with All Pairs Shortest Path (APSP)
 
 ## for Global and Local ClusteringCoefficient : Basic-MT-Skip

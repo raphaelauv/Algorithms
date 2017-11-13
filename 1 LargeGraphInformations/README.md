@@ -1,7 +1,5 @@
 # TP1 Large Graph Informations
 
-M2 INFORMATIQUE PARIS DIDEROT - 2017/2018
-
 ### PRECISIONS
 
 	CC -> Composante Connexe
