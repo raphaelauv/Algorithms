@@ -33,6 +33,10 @@ public class Graph {
 	HashMap<Integer, Node> mapNodes;
 	boolean oriented;
 	
+	public int size() {
+		return mapNodes.size();
+	}
+	
 	public Node[] getListeIds() {
 		Node [] list = new Node[mapNodes.size()];
 		int i=0;

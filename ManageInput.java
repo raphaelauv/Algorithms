@@ -52,10 +52,19 @@ public final class ManageInput{
 
 	}
 		
-	public static Graph creatGraph(String arg) {
+	public static Graph creatGraph(String[] args) {
+		
+		
+		boolean oriented =false;
+		if(args.length>1) {
+			if(args[1].equals("o")){
+				oriented=true;
+			}
+		}
+		
 		try {
-			BufferedReader br = new BufferedReader(new FileReader(arg));
-			Graph myGraph = new Graph(false); //TODO
+			BufferedReader br = new BufferedReader(new FileReader(args[0]));
+			Graph myGraph = new Graph(oriented);
 
 			if (!parseAndFillGraph2(myGraph, br)) {
 				return null;
@@ -74,6 +83,6 @@ public final class ManageInput{
 	
 	public static void missingArgs() {
 		System.out.println("il manque arguments");
-        System.out.println("Pour exécuter : java BetweennessCentrality [nom_du_fichier]");
+        System.out.println("Pour exécuter : java BetweennessCentrality [nom_du_fichier] [o]");
 	}
 }

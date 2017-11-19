@@ -39,12 +39,12 @@ class Let_Bet_V implements Function<Node,String> {
 	
 	Node[] listNodes;
 	boolean oriented;
-	double firstPartEquation;
 	
-	public Let_Bet_V(Node[] listNodes,boolean oriented ,double firstPartEquation) {
+	
+	public Let_Bet_V(Node[] listNodes,boolean oriented) {
 		this.listNodes=listNodes;
 		this.oriented=oriented;
-		this.firstPartEquation=firstPartEquation;
+		
 	}
 	
 	@Override
@@ -64,11 +64,11 @@ class Let_Bet_V implements Function<Node,String> {
 			}
 		}
 		
-		return "node: "+nodeV.id+" : "+firstPartEquation * cmp;
+		return "node: "+nodeV.id+" : "+BetweennessCentrality.firstPartEquation * cmp;
 		 
 	}
 
-	public double bet_SVT(Node nodeS,Node nodeV,Node nodeT) {
+	private double bet_SVT(Node nodeS,Node nodeV,Node nodeT) {
 		Tuple tupleT = nodeV.getTuple(nodeT);
 		Tuple tupleS = nodeV.getTuple(nodeS);
 		
@@ -160,15 +160,12 @@ class Let_BFS implements Function<Node,EmptyResult>{
 		
 		boolean first=true;
 		
-		int actualnbcc;
-		
 		while (!stack.isEmpty()) {
 			tmpNode = stack.poll();
 			
 			
 			actualtmpTuple=actualNode.getTuple(tmpNode);
 			actualDistance=actualtmpTuple.distance;
-			actualnbcc=actualtmpTuple.nbcc;
 			
 			
 			if(actualDistance>maxDistance_of_D) {
@@ -206,7 +203,11 @@ class Let_BFS implements Function<Node,EmptyResult>{
 
 public class BetweennessCentrality {
 	
+	public static double firstPartEquation;
+	
 	public static void printAllBetweennessCentrality(Graph myGraph) {
+		
+		firstPartEquation = 1 / (double) ( (myGraph.size()-1) * (myGraph.size()-2) );
 		
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		FixedDataStruckPool dataPool=new FixedDataStruckPool(corePoolSize);
@@ -216,10 +217,8 @@ public class BetweennessCentrality {
 		streamOfResults.forEach(x-> {});
 		
 		Node[] listNodes = myGraph.getListeIds();
-		double firstPartEquation = 1 / (double) ( (listNodes.length-1) * (listNodes.length-2) );
-		
 		Stream<Node> streamOfNodes2 =myGraph.mapNodes.values().stream().parallel();
-		Stream<String> streamOfResults2 = streamOfNodes2.map(new Let_Bet_V(listNodes,myGraph.oriented,firstPartEquation));
+		Stream<String> streamOfResults2 = streamOfNodes2.map(new Let_Bet_V(listNodes,myGraph.oriented));
 		streamOfResults2.forEach(s -> System.out.println(s));
 
 	}
@@ -231,7 +230,7 @@ public class BetweennessCentrality {
 			ManageInput.missingArgs();
 			return;
 		}
-		Graph myGraph = ManageInput.creatGraph(args[0]);
+		Graph myGraph = ManageInput.creatGraph(args);
 		if(myGraph==null) {return;}
 		
 		ManageInput.printMemoryStart();
