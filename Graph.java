@@ -1,22 +1,8 @@
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.stream.Stream;
-
-import javax.sql.rowset.spi.SyncResolver;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 class Tuple{
 	public Integer distance;
@@ -71,12 +57,12 @@ class Node {
 	
 	final int id;
 	Collection<Node> directNeighbours;
-	HashMap<Node, Tuple> accessibleNeighboursInfo;
+	Map<Node, Tuple> accessibleNeighboursInfo;
 		
 	public Node(int id) {
 		this.id = id;
 		this.directNeighbours = new ArrayList<>(); 			//better than linkedList for the parallele version without marqued technique
-		this.accessibleNeighboursInfo = new HashMap<>();
+		this.accessibleNeighboursInfo = new ConcurrentHashMap<>();
 	}
 	
 	/*
@@ -96,21 +82,21 @@ class Node {
 	public void insertEdge(Node neighbour) {
 		this.directNeighbours.add(neighbour);
 	}
-	
-	public synchronized void insert(Node aNeighbour,Tuple tpl) {
+
+	public void insert(Node aNeighbour, Tuple tpl) {
 		accessibleNeighboursInfo.put(aNeighbour, tpl);
 	}
-	
-	public synchronized Tuple getTuple(Node aNeighbour) {
-		return accessibleNeighboursInfo.get(aNeighbour); 
+
+	public Tuple getTuple(Node aNeighbour) {
+		return accessibleNeighboursInfo.get(aNeighbour);
 	}
-	
-	public synchronized Integer getDistanceOf(Node aNeighbour) {
+
+	public Integer getDistanceOf(Node aNeighbour) {
 		return accessibleNeighboursInfo.get(aNeighbour).distance;
 	}
-	
-	public synchronized int getNbpccOf(Node t) {
-		return accessibleNeighboursInfo.get(t).nbcc; 
+
+	public int getNbpccOf(Node t) {
+		return accessibleNeighboursInfo.get(t).nbcc;
 	}
 
 }

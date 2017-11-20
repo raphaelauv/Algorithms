@@ -207,6 +207,9 @@ public class BetweennessCentrality {
 	
 	public static void printAllBetweennessCentrality(Graph myGraph) {
 		
+		long startTime = System.nanoTime();
+		
+		Node[] listNodes = myGraph.getListeIds();
 		firstPartEquation = 1 / (double) ( (myGraph.size()-1) * (myGraph.size()-2) );
 		
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
@@ -216,11 +219,13 @@ public class BetweennessCentrality {
 		Stream<EmptyResult> streamOfResults = streamOfNodes.map(new Let_BFS(dataPool));
 		streamOfResults.forEach(x-> {});
 		
-		Node[] listNodes = myGraph.getListeIds();
+		
 		Stream<Node> streamOfNodes2 =myGraph.mapNodes.values().stream().parallel();
 		Stream<String> streamOfResults2 = streamOfNodes2.map(new Let_Bet_V(listNodes,myGraph.oriented));
 		streamOfResults2.forEach(s -> System.out.println(s));
 
+		long endTime = System.nanoTime();
+		System.out.println(endTime - startTime);
 	}
 
 	

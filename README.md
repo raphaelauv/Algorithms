@@ -51,3 +51,9 @@ Implementations Parallele grace a l'API Stream
 Une pool de struck pour minimusé les besoins en memoire
 
 ### 5. REFERENCES
+
+**Mirlayne Campuzano-Alvarez and Adrian Fonseca-Bruzón**
+Distributed and Parallel Algorithm for Computing Betweenness Centrality - chapter 24 - Advances in Artificial Intelligence - IBERAMIA 2016
+***
+**Ulrik Brandes**
+A Faster Algorithm for Betweenness Centrality - University of Konstanz
