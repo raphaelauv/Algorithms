@@ -172,7 +172,7 @@ class Let_BFS implements Function<Node,EmptyResult>{
 				maxDistance_of_D++;
 			}
 			
-			for (Node aNeighbour : tmpNode.neighbours) {
+			for (Node aNeighbour : tmpNode.directNeighbours) {
 				
 				NtmpTuple = actualNode.getTuple(aNeighbour);
 				

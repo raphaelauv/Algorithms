@@ -18,7 +18,6 @@ import java.util.stream.Stream;
 
 import javax.sql.rowset.spi.SyncResolver;
 
-
 class Tuple{
 	public Integer distance;
 	public Integer nbcc;
@@ -57,7 +56,9 @@ public class Graph {
 		if(actualID!=neighbourID) {
 			Node neighbourNode = this.mapNodes.computeIfAbsent(neighbourID,k ->new Node(neighbourID));
 			actualNode.insertEdge(neighbourNode);
-			neighbourNode.insertEdge(actualNode);
+			if(!oriented) {
+				neighbourNode.insertEdge(actualNode);
+			}
 		}
 	}
 	
@@ -69,13 +70,13 @@ public class Graph {
 class Node {
 	
 	final int id;
-	Collection<Node> neighbours;
-	HashMap<Node, Tuple> neighboursInfo;
+	Collection<Node> directNeighbours;
+	HashMap<Node, Tuple> accessibleNeighboursInfo;
 		
 	public Node(int id) {
 		this.id = id;
-		this.neighbours = new ArrayList<>(); 			//better than linkedList for the parallele version without marqued technique
-		this.neighboursInfo = new HashMap<>();
+		this.directNeighbours = new ArrayList<>(); 			//better than linkedList for the parallele version without marqued technique
+		this.accessibleNeighboursInfo = new HashMap<>();
 	}
 	
 	/*
@@ -84,8 +85,8 @@ class Node {
 	public void printfAllmyNeighboursInfo() {
 		String str = id+"-----------\n";
 		Tuple tmp;
-		for(Node  n:neighboursInfo.keySet() ) {
-			tmp = neighboursInfo.get(n);
+		for(Node  n:accessibleNeighboursInfo.keySet() ) {
+			tmp = accessibleNeighboursInfo.get(n);
 			str+=n.id+" "+tmp.distance+" "+tmp.nbcc+"\n";
 		}
 		
@@ -93,23 +94,23 @@ class Node {
 	}
 
 	public void insertEdge(Node neighbour) {
-		this.neighbours.add(neighbour);
+		this.directNeighbours.add(neighbour);
 	}
 	
 	public synchronized void insert(Node aNeighbour,Tuple tpl) {
-		neighboursInfo.put(aNeighbour, tpl);
+		accessibleNeighboursInfo.put(aNeighbour, tpl);
 	}
 	
 	public synchronized Tuple getTuple(Node aNeighbour) {
-		return neighboursInfo.get(aNeighbour); 
+		return accessibleNeighboursInfo.get(aNeighbour); 
 	}
 	
 	public synchronized Integer getDistanceOf(Node aNeighbour) {
-		return neighboursInfo.get(aNeighbour).distance;
+		return accessibleNeighboursInfo.get(aNeighbour).distance;
 	}
 	
 	public synchronized int getNbpccOf(Node t) {
-		return neighboursInfo.get(t).nbcc; 
+		return accessibleNeighboursInfo.get(t).nbcc; 
 	}
 
 }
