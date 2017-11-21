@@ -1,36 +1,24 @@
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-class Tuple{
-	public Integer distance;
-	public Integer nbcc;
-	public Tuple(Integer distance, Integer nbcc) {
-		this.distance = distance;
-		this.nbcc = nbcc;
-	}
-}
 
 public class Graph {
 
 	private Map<Integer, Node> mapNodes;
-	boolean oriented;
+	final boolean oriented;
 	
-	private ArrayList<Node> listNodes;
-	
-	public ArrayList<Node> getListeNodes() {
-		return listNodes;
-	}
+	private ArrayList<Node> listNodes;			//filed at the same time than the map , avoid to iterate later the map
 	
 	public Graph(boolean oriented) {
 		this.mapNodes = new HashMap<>();
 		this.listNodes = new ArrayList<>();
 		this.oriented = oriented;
 	}
-	
+	public ArrayList<Node> getListeNodes() {
+		return listNodes;
+	}
 	public void addEdge(int actualID, int neighbourID) {
 		Node actualNode = this.mapNodes.computeIfAbsent(actualID,k ->{
 			listNodes.add(new Node(actualID));return listNodes.get(listNodes.size()-1);
@@ -45,9 +33,14 @@ public class Graph {
 			}
 		}
 	}
-	
-	public Node getNodeFromId(int t) {
-		return this.mapNodes.get(t);
+}
+
+class Tuple{
+	public Integer distance;
+	public Integer nbcc;
+	public Tuple(Integer distance, Integer nbcc) {
+		this.distance = distance;
+		this.nbcc = nbcc;
 	}
 }
 

@@ -203,7 +203,6 @@ public class BetweennessCentrality {
 		Stream<EmptyResult> streamOfResults = streamOfNodes.map(new Let_BFS(dataPool));
 		streamOfResults.forEach(x-> {});
 		
-		
 		Stream<Node> streamOfNodes2 = listNodes.stream().parallel();
 		Stream<EmptyResult> streamOfResults2 = streamOfNodes2.map(new Let_Bet_V(listNodes,myGraph.oriented));
 		streamOfResults2.forEach(x -> {});
