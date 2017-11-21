@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -14,33 +15,30 @@ class Tuple{
 }
 
 public class Graph {
-	
-	HashMap<Integer, Node> mapNodes;
+
+	private Map<Integer, Node> mapNodes;
 	boolean oriented;
 	
-	public int size() {
-		return mapNodes.size();
-	}
+	private ArrayList<Node> listNodes;
 	
-	public Node[] getListeIds() {
-		Node [] list = new Node[mapNodes.size()];
-		int i=0;
-		for(Node t:mapNodes.values()) {
-			list[i]=t;
-			i++;
-		}
-		return list;
+	public ArrayList<Node> getListeNodes() {
+		return listNodes;
 	}
 	
 	public Graph(boolean oriented) {
 		this.mapNodes = new HashMap<>();
+		this.listNodes = new ArrayList<>();
 		this.oriented = oriented;
 	}
 	
 	public void addEdge(int actualID, int neighbourID) {
-		Node actualNode = this.mapNodes.computeIfAbsent(actualID,k ->new Node(actualID));
+		Node actualNode = this.mapNodes.computeIfAbsent(actualID,k ->{
+			listNodes.add(new Node(actualID));return listNodes.get(listNodes.size()-1);
+		});
 		if(actualID!=neighbourID) {
-			Node neighbourNode = this.mapNodes.computeIfAbsent(neighbourID,k ->new Node(neighbourID));
+			Node neighbourNode = this.mapNodes.computeIfAbsent(neighbourID,k ->{
+				listNodes.add(new Node(neighbourID));return listNodes.get(listNodes.size()-1);
+			});
 			actualNode.insertEdge(neighbourNode);
 			if(!oriented) {
 				neighbourNode.insertEdge(actualNode);
@@ -57,7 +55,7 @@ class Node {
 	
 	final int id;
 	Collection<Node> directNeighbours;
-	Map<Node, Tuple> accessibleNeighboursInfo;
+	private Map<Node, Tuple> accessibleNeighboursInfo;
 		
 	public Node(int id) {
 		this.id = id;
@@ -74,8 +72,7 @@ class Node {
 		for(Node  n:accessibleNeighboursInfo.keySet() ) {
 			tmp = accessibleNeighboursInfo.get(n);
 			str+=n.id+" "+tmp.distance+" "+tmp.nbcc+"\n";
-		}
-		
+		}		
 		System.out.println(str);
 	}
 
@@ -98,5 +95,4 @@ class Node {
 	public int getNbpccOf(Node t) {
 		return accessibleNeighboursInfo.get(t).nbcc;
 	}
-
 }

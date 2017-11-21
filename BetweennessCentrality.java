@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -7,7 +8,6 @@ import java.util.stream.Stream;
 class FixedDataStruckPool{
 	private int nbStruck;	
 	private int nbStackCreated;
-	
 	private ConcurrentLinkedDeque<Queue<Node>> listStack;
 
 	public FixedDataStruckPool(int nbStruck) {
@@ -35,28 +35,25 @@ class FixedDataStruckPool{
 class EmptyResult{
 }
 
-class Let_Bet_V implements Function<Node,String> {
+class Let_Bet_V implements Function<Node,EmptyResult> {
 	
-	Node[] listNodes;
+	ArrayList<Node> listNodes;
 	boolean oriented;
-	
-	
-	public Let_Bet_V(Node[] listNodes,boolean oriented) {
+	public Let_Bet_V(ArrayList<Node> listNodes,boolean oriented) {
 		this.listNodes=listNodes;
 		this.oriented=oriented;
-		
 	}
 	
 	@Override
-	public String apply(Node nodeV) {
+	public EmptyResult apply(Node nodeV) {
 		
 		double cmp=0;
 		Node nodeS;
 		Node nodeT;
-		for(int i=0;i<listNodes.length;i++) {
-			for(int j=0;j<listNodes.length;j++) {
-				nodeS = listNodes[i];
-				nodeT = listNodes[j];
+		for(int i=0;i<listNodes.size();i++) {
+			for(int j=0;j<listNodes.size();j++) {
+				nodeS = listNodes.get(i);
+				nodeT = listNodes.get(j);
 				
 				if(nodeS!=nodeT && nodeS!=nodeV && nodeT!=nodeV) {
 					cmp+=bet_SVT(nodeS,nodeV,nodeT);
@@ -64,14 +61,14 @@ class Let_Bet_V implements Function<Node,String> {
 			}
 		}
 		
-		return "node: "+nodeV.id+" : "+BetweennessCentrality.firstPartEquation * cmp;
+		System.out.println("node: "+nodeV.id+" : "+BetweennessCentrality.firstPartEquation * cmp);
+		return null;
 		 
 	}
 
 	private double bet_SVT(Node nodeS,Node nodeV,Node nodeT) {
 		Tuple tupleT = nodeV.getTuple(nodeT);
 		Tuple tupleS = nodeV.getTuple(nodeS);
-		
 		if(tupleT ==null || tupleS==null) {
 			return (double) 0;
 		}
@@ -83,7 +80,6 @@ class Let_Bet_V implements Function<Node,String> {
 		boolean vInsidePCC = false;
 		int distanceVSandVT = distanceVS + distanceVT;
 		
-
 		boolean wayST = false;
 		boolean wayTS = false;
 		
@@ -123,13 +119,10 @@ class Let_Bet_V implements Function<Node,String> {
 				nbpccSVT=0; //TODO
 			}
 			
-		}else {
-			
+		}else {	
 			nbpccSVT = nbpccSV *nbpccVT;
 		}
-				
 		int nbpccST = nodeS.getNbpccOf(nodeT);	
-
 		return nbpccSVT / (double) (nbpccST);
 	}
 }
@@ -137,13 +130,11 @@ class Let_Bet_V implements Function<Node,String> {
 class Let_BFS implements Function<Node,EmptyResult>{
 
 	FixedDataStruckPool dataPool;
-
 	public Let_BFS(FixedDataStruckPool dataPool) {
 		this.dataPool=dataPool;
 	}
 	
 	public EmptyResult apply(Node actualNode) {
-		
 		
 		Queue<Node> stack = dataPool.getStack();
 		stack.add(actualNode);
@@ -151,39 +142,31 @@ class Let_BFS implements Function<Node,EmptyResult>{
 		Integer actualDistance =0;
 		int maxDistance_of_D = 0;
 		
-		
 		actualNode.insert(actualNode, new Tuple(actualDistance,0));
 
 		Node tmpNode;
 		Tuple actualtmpTuple = null;
 		Tuple NtmpTuple;
-		
 		boolean first=true;
 		
 		while (!stack.isEmpty()) {
 			tmpNode = stack.poll();
-			
-			
 			actualtmpTuple=actualNode.getTuple(tmpNode);
 			actualDistance=actualtmpTuple.distance;
-			
 			
 			if(actualDistance>maxDistance_of_D) {
 				maxDistance_of_D++;
 			}
 			
 			for (Node aNeighbour : tmpNode.directNeighbours) {
-				
 				NtmpTuple = actualNode.getTuple(aNeighbour);
 				
 				if(NtmpTuple==null) {
-					
 					if(first) {
 						actualNode.insert(aNeighbour, new Tuple(maxDistance_of_D+1,1));	
 					}else {
 						actualNode.insert(aNeighbour, new Tuple(maxDistance_of_D+1,actualtmpTuple.nbcc));
-					}	
-					
+					}
 					stack.add(aNeighbour);
 				}else {
 					actualDistance=NtmpTuple.distance;
@@ -209,20 +192,21 @@ public class BetweennessCentrality {
 		
 		long startTime = System.nanoTime();
 		
-		Node[] listNodes = myGraph.getListeIds();
-		firstPartEquation = 1 / (double) ( (myGraph.size()-1) * (myGraph.size()-2) );
+		ArrayList<Node> listNodes = myGraph.getListeNodes();
+		
+		firstPartEquation = 1 / (double) ( (listNodes.size()-1) * (listNodes.size()-2) );
 		
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		FixedDataStruckPool dataPool=new FixedDataStruckPool(corePoolSize);
 		
-		Stream<Node> streamOfNodes =myGraph.mapNodes.values().stream().parallel();
+		Stream<Node> streamOfNodes = listNodes.stream().parallel();
 		Stream<EmptyResult> streamOfResults = streamOfNodes.map(new Let_BFS(dataPool));
 		streamOfResults.forEach(x-> {});
 		
 		
-		Stream<Node> streamOfNodes2 =myGraph.mapNodes.values().stream().parallel();
-		Stream<String> streamOfResults2 = streamOfNodes2.map(new Let_Bet_V(listNodes,myGraph.oriented));
-		streamOfResults2.forEach(s -> System.out.println(s));
+		Stream<Node> streamOfNodes2 = listNodes.stream().parallel();
+		Stream<EmptyResult> streamOfResults2 = streamOfNodes2.map(new Let_Bet_V(listNodes,myGraph.oriented));
+		streamOfResults2.forEach(x -> {});
 
 		long endTime = System.nanoTime();
 		System.out.println(endTime - startTime);
