@@ -8,6 +8,7 @@ public class Graph {
 
 	private Map<Integer, Node> mapNodes;
 	final boolean oriented;
+	int nbEdges;
 	
 	private ArrayList<Node> listNodes;			//filed at the same time than the map , avoid to iterate later the map
 	
@@ -28,8 +29,10 @@ public class Graph {
 				listNodes.add(new Node(neighbourID));return listNodes.get(listNodes.size()-1);
 			});
 			actualNode.insertEdge(neighbourNode);
+			nbEdges++;
 			if(!oriented) {
 				neighbourNode.insertEdge(actualNode);
+				nbEdges++;
 			}
 		}
 	}

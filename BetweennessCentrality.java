@@ -52,10 +52,13 @@ class Let_Bet_V implements Function<Node,EmptyResult> {
 		Node nodeT;
 		for(int i=0;i<listNodes.size();i++) {
 			for(int j=0;j<listNodes.size();j++) {
+				if(i==j) {
+					continue;
+				}
 				nodeS = listNodes.get(i);
 				nodeT = listNodes.get(j);
 				
-				if(nodeS!=nodeT && nodeS!=nodeV && nodeT!=nodeV) {
+				if(nodeS!=nodeV) {
 					cmp+=bet_SVT(nodeS,nodeV,nodeT);
 				}
 			}
@@ -77,51 +80,18 @@ class Let_Bet_V implements Function<Node,EmptyResult> {
 		Integer distanceVS = tupleS.distance;
 		
 		int distanceST = nodeS.getDistanceOf(nodeT);
-		boolean vInsidePCC = false;
+		
 		int distanceVSandVT = distanceVS + distanceVT;
 		
-		boolean wayST = false;
-		boolean wayTS = false;
-		
-		if(oriented) {
-			int distanceTS = nodeT.getDistanceOf(nodeS);
-			if(distanceVSandVT == distanceST) {
-				vInsidePCC=true;
-				wayST=true;
-			}
-			if(distanceVSandVT == distanceTS) {
-				vInsidePCC=true;
-				wayTS=true;
-			}
-			
-			
-		}else {
-			if(distanceVSandVT == distanceST) {
-				vInsidePCC=true;
-			}
-		}
-		
-		
-		if(!vInsidePCC) {
+		if(distanceVSandVT != distanceST) {
 			return (double) 0;
 		}
 		
-		int nbpccSVT;
 		int nbpccSV = nodeS.getNbpccOf(nodeV);
 		int nbpccVT = nodeT.getNbpccOf(nodeV);
-		if(oriented) {
-			
-			if(wayST && wayTS) {
-				nbpccSVT = nbpccSV *nbpccVT;
-			}else if(wayST){
-				nbpccSVT=0; //TODO
-			}else {
-				nbpccSVT=0; //TODO
-			}
-			
-		}else {	
-			nbpccSVT = nbpccSV *nbpccVT;
-		}
+
+		int nbpccSVT = nbpccSV *nbpccVT;
+		
 		int nbpccST = nodeS.getNbpccOf(nodeT);	
 		return nbpccSVT / (double) (nbpccST);
 	}
@@ -197,6 +167,7 @@ public class BetweennessCentrality {
 		firstPartEquation = 1 / (double) ( (listNodes.size()-1) * (listNodes.size()-2) );
 		
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
+		
 		FixedDataStruckPool dataPool=new FixedDataStruckPool(corePoolSize);
 		
 		Stream<Node> streamOfNodes = listNodes.stream().parallel();
@@ -209,6 +180,8 @@ public class BetweennessCentrality {
 
 		long endTime = System.nanoTime();
 		System.out.println(endTime - startTime);
+		//System.out.println("nb nodes : "+listNodes.size());
+		//System.out.println("nb edges : "+myGraph.nbEdges);
 	}
 
 	
