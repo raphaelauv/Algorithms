@@ -40,10 +40,10 @@ public class Graph {
 
 class Tuple{
 	public Integer distance;
-	public Integer nbcc;
-	public Tuple(Integer distance, Integer nbcc) {
+	public Integer nbpcc;
+	public Tuple(Integer distance, Integer nbpcc) {
 		this.distance = distance;
-		this.nbcc = nbcc;
+		this.nbpcc = nbpcc;
 	}
 }
 
@@ -55,7 +55,7 @@ class Node {
 		
 	public Node(int id) {
 		this.id = id;
-		this.directNeighbours = new ArrayList<>(); 			//better than linkedList for the parallele version without marqued technique
+		this.directNeighbours = new ArrayList<>(); 	//better than linkedList for the parallele version without marqued technique
 		this.accessibleNeighboursInfo = new ConcurrentHashMap<>();
 	}
 	
@@ -67,7 +67,7 @@ class Node {
 		Tuple tmp;
 		for(Node  n:accessibleNeighboursInfo.keySet() ) {
 			tmp = accessibleNeighboursInfo.get(n);
-			str+=n.id+" "+tmp.distance+" "+tmp.nbcc+"\n";
+			str+=n.id+" "+tmp.distance+" "+tmp.nbpcc+"\n";
 		}		
 		System.out.println(str);
 	}
@@ -89,6 +89,6 @@ class Node {
 	}
 
 	public int getNbpccOf(Node t) {
-		return accessibleNeighboursInfo.get(t).nbcc;
+		return accessibleNeighboursInfo.get(t).nbpcc;
 	}
 }

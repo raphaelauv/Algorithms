@@ -1,4 +1,4 @@
-# Betweenness Centrality Parallel (MULTITHREADING)
+# Betweenness Centrality - trivial Parallel version (MULTITHREADING)
 
 ## Oriented and Non oriented
 
@@ -20,6 +20,10 @@
  
 
 ### 4. EXPLICATION
+
+
+	In practice the floydWarshall implementation is faster (speedUp x2) because it only use arrays and do not suffer of cache miss
+
 
 #### 4.1 TIME COMPLEXITY
 
@@ -44,11 +48,12 @@
 
 #### 4.4 IMPLEMENTATION IN JAVA
 
-	- le graph est une hashmap de id,Node
-	- Chaque Node stocke une arraylist de ces voisins et une HashMap des Node accesible avec leur distance et nppc respective
+	
+	- The graph is an hashMap of id and Node
+	- Each Node keep an arraylist of neighbours and an hashmap of accesibleNodes and a tuple of distance and number of Shortest paths
+	- We parallelize thank to the API stream
+	- A pool of ArrayDeque for the N-BFS ,to minimize the need of memory
 
-Implementations Parallele grace a l'API Stream
-Une pool de struck pour minimusé les besoins en memoire
 
 ### 5. REFERENCES
 

@@ -1,3 +1,4 @@
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -16,7 +17,7 @@ class FixedDataStruckPool{
 	}
 	public Queue<Node> getStack() {
 		if(nbStackCreated<nbStruck) {
-			Queue<Node> struck = new LinkedList<>();
+			Queue<Node> struck = new ArrayDeque<>();
 			nbStackCreated++;
 			return struck;
 		}else {
@@ -25,7 +26,7 @@ class FixedDataStruckPool{
 	}
 	
 	public void realeaseStack(Queue<Node>struck) {
-		struck.clear();	
+		struck.clear();
 		listStack.addFirst(struck);
 	}
 }
@@ -76,12 +77,9 @@ class Let_Bet_V implements Function<Node,EmptyResult> {
 			return (double) 0;
 		}
 		
-		Integer distanceVT = tupleT.distance;
-		Integer distanceVS = tupleS.distance;
-		
 		int distanceST = nodeS.getDistanceOf(nodeT);
 		
-		int distanceVSandVT = distanceVS + distanceVT;
+		int distanceVSandVT = tupleS.distance + tupleT.distance;
 		
 		if(distanceVSandVT != distanceST) {
 			return (double) 0;
@@ -135,13 +133,13 @@ class Let_BFS implements Function<Node,EmptyResult>{
 					if(first) {
 						actualNode.insert(aNeighbour, new Tuple(maxDistance_of_D+1,1));	
 					}else {
-						actualNode.insert(aNeighbour, new Tuple(maxDistance_of_D+1,actualtmpTuple.nbcc));
+						actualNode.insert(aNeighbour, new Tuple(maxDistance_of_D+1,actualtmpTuple.nbpcc));
 					}
 					stack.add(aNeighbour);
 				}else {
 					actualDistance=NtmpTuple.distance;
 					if(actualDistance==maxDistance_of_D+1) {
-						NtmpTuple.nbcc+=actualtmpTuple.nbcc;
+						NtmpTuple.nbpcc+=actualtmpTuple.nbpcc;
 					}
 				}
 			}
@@ -177,9 +175,11 @@ public class BetweennessCentrality {
 		Stream<Node> streamOfNodes2 = listNodes.stream().parallel();
 		Stream<EmptyResult> streamOfResults2 = streamOfNodes2.map(new Let_Bet_V(listNodes,myGraph.oriented));
 		streamOfResults2.forEach(x -> {});
-
+		
 		long endTime = System.nanoTime();
 		System.out.println(endTime - startTime);
+		
+		
 		//System.out.println("nb nodes : "+listNodes.size());
 		//System.out.println("nb edges : "+myGraph.nbEdges);
 	}
