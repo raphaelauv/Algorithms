@@ -80,9 +80,46 @@ public class Modularity {
 		
 		ArrayList<Node> listNodes = myGraph.getListeNodes();
 	
+		int nbNodes = listNodes.size();
 		Partition myParti = new Partition(myGraph);
 		
-		return ;
+		double qIter;
+		double qMax=0;
+		
+		int nbParitions=0;
+		double qpPrime;
+		int [] pSuiv= new int[2];
+		
+		for (int i=0;i<nbNodes;i++) {
+			qIter=-1;
+			for( int a=0;a<nbNodes;a++) {
+				for( int b=0;b<nbNodes;b++) {
+					if(a==b) {
+						continue;
+					}
+					if(!myParti.isChefs(a,b)) {
+						continue;
+					}
+					qpPrime = myParti.getQP(a,b);
+					if(qpPrime>qIter) {
+						pSuiv[0]=a;
+						pSuiv[1]=b;
+						qIter=qpPrime;
+					}
+					
+				}
+			}
+			
+			myParti.performFusion(pSuiv[0],pSuiv[1]);
+			if(qIter>qMax) {
+				qMax=qIter;
+			}
+			
+		}
+		
+		
+		//print(myParti);
+		return null;
 		/*
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		
