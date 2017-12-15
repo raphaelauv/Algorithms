@@ -34,6 +34,8 @@ public class Graph {
 		}
 	}
 	
+	/*
+	 
 	public int[][] getMatriceAdjency(){
 		int[][] adjencyMatrice = new int[nbNodes][nbNodes];
 		
@@ -57,6 +59,8 @@ public class Graph {
 		}
 		System.out.println("----------------");
 	}
+	
+	*/
 }
 
 
@@ -106,11 +110,7 @@ class Partition{
 		return partitions[Vi][3]/(double)nbEdges;
 	}
 	
-	/*
-	public double getEij(int Vi , int Vj) {
-		return matrice[Vi][Vj]/(double)nbEdges;
-	}
-	*/
+	
 	public synchronized double getAii(int idChef) {
 		int sumDegrees = partitions[idChef][5];
 		return (sumDegrees*sumDegrees) / (double) equation4m2;
@@ -232,11 +232,15 @@ class Partition{
 
 		int realnbEIIofB = nbEii(a,b);
 		int realDegreeB;
-		synchronized (partitions[b]) {
-			synchronized (partitions[a]) {
-				realDegreeB = partitions[b][5] + partitions[a][5];
-			}
+		int degreeA;
+		synchronized (partitions[a]) {
+			degreeA=partitions[a][5];
 		}
+		
+		synchronized (partitions[b]) {
+			realDegreeB = partitions[b][5]; 
+		}
+		realDegreeB+=degreeA;
 		
 		double sum=0;
 		boolean itsB;

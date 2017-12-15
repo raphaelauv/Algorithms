@@ -70,6 +70,8 @@ public class Modularity {
 		boolean newBest;
 		int nbClusters=nbNodes;
 		for (int i=0;i<nbNodes-1;i++) {
+			nbEiiIter=-1;
+			newBest=false;
 			
 			int nbComparaisons = (nbClusters*(nbClusters-1))/2;
 			int[][] arrayOfTuple = new int[nbComparaisons][2];
@@ -89,10 +91,6 @@ public class Modularity {
 			}
 			nbClusters--;
 			
-			
-			
-			nbEiiIter=-1;
-			newBest=false;
 			//double[] qIterInit=new double[] {-1,0,0,0};
 			
 			Stream<int[]> streamOfNodes =Stream.of(arrayOfTuple).parallel();
@@ -113,8 +111,8 @@ public class Modularity {
 			pSuiv[0]=(int) qIterBest[2];
 			pSuiv[1]=(int) qIterBest[3];
 			nbEiiIter= (int) qIterBest[1];
+			
 			myParti.performFusion(pSuiv[0],pSuiv[1],nbEiiIter);
-			//System.out.println("FUSION "+pSuiv[0]+" "+pSuiv[1]);
 			if(qIterBest[0]>qMax) {
 				qMax=qIterBest[0];
 				clusters=myParti.getClusters();
@@ -125,11 +123,9 @@ public class Modularity {
 					Partition.printClusters(clusters);	
 				}else {
 					Partition.printClusters(myParti.getClusters());
-				}
-				
+				}	
 				System.out.println(" : "+qIterBest[0]);
 			}
-			
 		}
 		System.out.println("RESULT");
 		Partition.printClusters(clusters);
