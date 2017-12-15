@@ -1,11 +1,9 @@
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Queue;
 
 public class Graph {
 
@@ -65,37 +63,25 @@ public class Graph {
 
 class Partition{
 
-	public int nbActualClusters;
-	
 	int [][] partitions;
-	
-	//int [][] matrice;
+	int nbActualClusters;
 	int nbEdges;
 	int nbNodes;
 	int equation4m2;
-	
 	ArrayList<Node> listNodes;
-	
-	Queue<Node> stackForBFS = new ArrayDeque<>();
 	
 	public Partition(Graph myGraph) {
 		this.nbActualClusters=myGraph.nbNodes;
 		this.nbNodes=nbActualClusters;
 		this.nbEdges = myGraph.nbEdges;
-
-		/*
-		this.matrice = myGraph.getMatriceAdjency();
-		Graph.printAdjency(matrice);
-		*/
 		this.listNodes = myGraph.getListeNodes();
 	
-		
 		this.partitions = new int[nbNodes][6];
 		Node tmp;
 		for(int i=0; i<myGraph.nbNodes;i++) {
 			tmp = listNodes.get(i);
 			
-			this.partitions[i][0] = tmp.id;
+			this.partitions[i][0] = tmp.id; //id in input graph file
 			this.partitions[i][1] = tmp.paritionId; // positionInArrayList , id of cluster
 			this.partitions[i][2] = 1; //isChef
 			this.partitions[i][3] = 0;//Eii
@@ -106,7 +92,7 @@ class Partition{
 		this.equation4m2 = 4 *( nbEdges * nbEdges);
 	}
 	
-	public boolean isChefs(int Va,int Vb) {
+	public synchronized boolean isChefs(int Va,int Vb) {
 		if(partitions[Va][2]==1 && partitions[Vb][2]==1) {
 			//System.out.print("\nchef "+Va+" "+Vb);
 			return true;
@@ -116,7 +102,7 @@ class Partition{
 		}
 	}
 	
-	public double getEii(int Vi) {
+	public synchronized double getEii(int Vi) {
 		return partitions[Vi][3]/(double)nbEdges;
 	}
 	
@@ -125,38 +111,47 @@ class Partition{
 		return matrice[Vi][Vj]/(double)nbEdges;
 	}
 	*/
-	public double getAii(int idChef) {
+	public synchronized double getAii(int idChef) {
 		int sumDegrees = partitions[idChef][5];
 		return (sumDegrees*sumDegrees) / (double) equation4m2;
 	}
 	
-	
+	/*
+	 * find the reel set of the node a
+	 */
 	public int findSet(int a) {
-		if(partitions[a][2]==1) {
-			return partitions[a][1];
-		}
 		
-		int setChef =partitions[a][2];
+		synchronized(partitions[a]) {
+			if(partitions[a][2]==1) {
+				return partitions[a][1];
+			}
+			
+			int setChef =partitions[a][2];
 
-		while(partitions[setChef][2]!=1) {
-			setChef=partitions[setChef][2];
+			while(partitions[setChef][2]!=1) {
+				setChef=partitions[setChef][2];
+			}
+			
+			partitions[a][1]=setChef;
+			return setChef;
 		}
-		
-		partitions[a][1]=setChef;
-		
-		return setChef;
+
 	}
 	
-	public int nbEii(int b) {
+	public int nbEii(int a,int b) {
 		
 		//System.out.println();
 		int nbEii=0;
 		Node tmp;
+		int idSet =0;
 		for(int i=0; i< nbNodes;i++) {
-			if(findSet(partitions[i][1])==b) {
+			
+			idSet = findSet(partitions[i][1]);
+			if(idSet==b || idSet==a) {
 				tmp = listNodes.get(i);
 				for(Node n:tmp.directNeighbours) {
-					if(findSet(partitions[n.paritionId][1])==b) {
+					idSet=findSet(partitions[n.paritionId][1]);
+					if(idSet==b || idSet==a) {
 						//System.out.println(tmp.id+" CONNECTED "+n.id);
 						nbEii++;
 					}
@@ -168,43 +163,103 @@ class Partition{
 		return nbEii/2;
 	}
 	
-	
-	
+
+	/*
+	 * iterative version
+	 */
 	public double[] getPprime_QPprime(int a ,int b){
 		
 		int actualClusterA =partitions[a][1];
 		int actualEii_ofB = partitions[b][3];
 		int actualDegreesOfB = partitions[b][5];
 		int actualDegreesOfA = partitions[a][5];
-		
 		partitions[a][1] = partitions[b][1];
-		partitions[b][3] = nbEii(b);
+		partitions[b][3] = nbEii(a,b);
 		partitions[b][5] += partitions[a][5];
-		
 		partitions[a][2] = 0;
 		partitions[a][5] = 0;
-		
-			
 		
 		double [] result = new double[2];
 		
 		result[0]=getQP();
 		result[1]=partitions[b][3];
-				
+		
+		
 		partitions[a][1] = actualClusterA;
 		partitions[a][2] = 1;
 		partitions[a][5] = actualDegreesOfA;
 		
 		partitions[b][3] = actualEii_ofB;
 		partitions[b][5] = actualDegreesOfB;
+		
 		return result;
 	}
 	
+	/*
+	 * parallelizable version
+	 */
+	public double[] getPprime_QPprimePAR(int a ,int b){
+	
+		
+		double [] result = new double[2];
+		
+		result[0]=getQP(a,b);
+		synchronized (partitions[b]) {
+			result[1]=partitions[b][3];
+		}
+		
+		return result;
+	}
+	
+	
+	/*
+	 * iterative version
+	 */
 	public double getQP() {
-
 		double sum=0;
 		for(int i=0; i<nbNodes;i++) {
-			if(partitions[i][2]==1) {//isChef of partition
+				if(partitions[i][2]==1) {//isChef of partition
+					sum+=(getEii(i)-getAii(i));
+				}
+			}
+		return sum;
+	}
+	
+	/*
+	 * parallelizable version
+	 */
+	public double getQP(int a , int b) {
+
+		int realnbEIIofB = nbEii(a,b);
+		int realDegreeB;
+		synchronized (partitions[b]) {
+			synchronized (partitions[a]) {
+				realDegreeB = partitions[b][5] + partitions[a][5];
+			}
+		}
+		
+		double sum=0;
+		boolean itsB;
+		boolean itsChef;
+		for(int i=0; i<nbNodes;i++) {
+			itsB=false;
+			itsChef=false;
+			synchronized (partitions[i]) {
+				if(partitions[i][1]==a) {
+					continue;//a is not a chef during calculation
+				}
+				else if(partitions[i][1]==b) {
+					itsB=true;
+					
+				}
+				else if(partitions[i][2]==1) {//isChef of partition
+					itsChef=true;
+				}
+			}
+			
+			if(itsB) {
+				sum+=(   realnbEIIofB/(double)nbEdges   -   ((realDegreeB*realDegreeB) / (double) equation4m2 ) );
+			}else if(itsChef) {
 				sum+=(getEii(i)-getAii(i));
 			}
 		}
@@ -212,7 +267,7 @@ class Partition{
 	}
 
 	// all nodes inside set a go inside set b 
-	public void performFusion(int a, int b, int totalNbEii) {
+	public synchronized void performFusion(int a, int b, int totalNbEii) {
 		if(partitions[a][2]!=1 || partitions[b][2]!=1) {
 			System.out.println("NOT CHEF : "+a+" "+b);
 			return;
@@ -234,7 +289,11 @@ class Partition{
 		}
 	}
 	
-	public int [][] getClusters() {
+	/*
+	 * return an array of clusters
+	 * complexity : 2*n ( n number of nodes)
+	 */
+	public synchronized int [][] getClusters() {
 		int [][] clusters = new int[nbNodes][];
 		int [] indexUnderCluster = new int[nbNodes];
 		
@@ -243,8 +302,6 @@ class Partition{
 				clusters[partitions[i][1]]= new int[partitions[i][4]];
 			}
 		}
-		
-		
 		
 		int cluster;
 		for(int i =0;i<nbNodes;i++) {
