@@ -1,3 +1,5 @@
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,12 +65,11 @@ public class Graph {
 
 class Partition{
 
-	public int nbActualPartitions;
+	public int nbActualClusters;
 	
 	int [][] partitions;
-	int [] degrees;
 	
-	int [][] matrice;
+	//int [][] matrice;
 	int nbEdges;
 	int nbNodes;
 	int equation4m2;
@@ -78,90 +79,124 @@ class Partition{
 	Queue<Node> stackForBFS = new ArrayDeque<>();
 	
 	public Partition(Graph myGraph) {
-		this.nbActualPartitions=myGraph.nbNodes;
-		this.nbNodes=nbActualPartitions;
+		this.nbActualClusters=myGraph.nbNodes;
+		this.nbNodes=nbActualClusters;
 		this.nbEdges = myGraph.nbEdges;
-		
-		this.degrees = new int[nbActualPartitions];
-		
-		
+
+		/*
 		this.matrice = myGraph.getMatriceAdjency();
 		Graph.printAdjency(matrice);
-		
+		*/
 		this.listNodes = myGraph.getListeNodes();
 	
 		
-		
-		this.partitions = new int[nbNodes][4]; //1 -> numero sommet , 2) numero cluster , 3) chef  , 4) degreeCluster
+		this.partitions = new int[nbNodes][6];
 		Node tmp;
 		for(int i=0; i<myGraph.nbNodes;i++) {
 			tmp = listNodes.get(i);
-			this.degrees[i]= tmp.degree;
+			
 			this.partitions[i][0] = tmp.id;
-			this.partitions[i][1] = tmp.paritionId; // positionInArrayList
-			this.partitions[i][2] = tmp.id; //chef
-			this.partitions[i][3] = 1;//Eii
+			this.partitions[i][1] = tmp.paritionId; // positionInArrayList , id of cluster
+			this.partitions[i][2] = 1; //isChef
+			this.partitions[i][3] = 0;//Eii
+			this.partitions[i][4] = 1;// sizePartition
+			this.partitions[i][5] = tmp.degree; // size degrees of cluster
 		}
 		
 		this.equation4m2 = 4 *( nbEdges * nbEdges);
 	}
 	
 	public boolean isChefs(int Va,int Vb) {
-		if(partitions[Va][1]==partitions[Va][2]) {
-			if(partitions[Vb][1]==partitions[Vb][2]) {
-				return true;
-			}
+		if(partitions[Va][2]==1 && partitions[Vb][2]==1) {
+			//System.out.print("\nchef "+Va+" "+Vb);
+			return true;
+		}else {
+			//System.out.print("\nNOT chef "+Va+" "+Vb);
+			return false;
 		}
-		return false;
 	}
 	
 	public double getEii(int Vi) {
-		return partitions[Vi][3]/nbEdges;
+		return partitions[Vi][3]/(double)nbEdges;
 	}
 	
+	/*
 	public double getEij(int Vi , int Vj) {
 		return matrice[Vi][Vj]/(double)nbEdges;
 	}
-	
+	*/
 	public double getAii(int idChef) {
-		int sumDegrees = degrees[idChef];
+		int sumDegrees = partitions[idChef][5];
 		return (sumDegrees*sumDegrees) / (double) equation4m2;
 	}
 	
 	
-	public int findUltimeChef(int id) {
-		int chef =partitions[id][]
-		//todo
+	public int findSet(int a) {
+		if(partitions[a][2]==1) {
+			return partitions[a][1];
+		}
+		
+		int setChef =partitions[a][2];
+
+		while(partitions[setChef][2]!=1) {
+			setChef=partitions[setChef][2];
+		}
+		
+		partitions[a][1]=setChef;
+		
+		return setChef;
 	}
 	
-	public int nbEii(int a , int b) {
+	public int nbEii(int b) {
 		
+		//System.out.println();
+		int nbEii=0;
+		Node tmp;
 		for(int i=0; i< nbNodes;i++) {
-			
+			if(findSet(partitions[i][1])==b) {
+				tmp = listNodes.get(i);
+				for(Node n:tmp.directNeighbours) {
+					if(findSet(partitions[n.paritionId][1])==b) {
+						//System.out.println(tmp.id+" CONNECTED "+n.id);
+						nbEii++;
+					}
+				}
+			}
 		}
-		Node tmp = listNodes.get(a);
-		
-		for(Node n:tmp.directNeighbours) {
-			if(n.id)
-		}
+		 
+		//System.out.println("interne "+b +" = "+nbEii/2);
+		return nbEii/2;
 	}
+	
+	
 	
 	public double[] getPprime_QPprime(int a ,int b){
 		
-		partitions[a][2] = partitions[b][0];
+		int actualClusterA =partitions[a][1];
 		int actualEii_ofB = partitions[b][3];
+		int actualDegreesOfB = partitions[b][5];
+		int actualDegreesOfA = partitions[a][5];
 		
-		partitions[b][3] = nbEii(a, b);
+		partitions[a][1] = partitions[b][1];
+		partitions[b][3] = nbEii(b);
+		partitions[b][5] += partitions[a][5];
 		
+		partitions[a][2] = 0;
+		partitions[a][5] = 0;
 		
-		double QPprime = getQP();
+			
 		
 		double [] result = new double[2];
-		result[0]=QPprime;
+		
+		result[0]=getQP();
 		result[1]=partitions[b][3];
 				
-		partitions[a][2]=partitions[a][0];
+		partitions[a][1] = actualClusterA;
+		partitions[a][2] = 1;
+		partitions[a][5] = actualDegreesOfA;
+		
 		partitions[b][3] = actualEii_ofB;
+		partitions[b][5] = actualDegreesOfB;
 		return result;
 	}
 	
@@ -169,18 +204,95 @@ class Partition{
 
 		double sum=0;
 		for(int i=0; i<nbNodes;i++) {
-			if(partitions[i][1]==partitions[i][2]) {//isChef of partition
+			if(partitions[i][2]==1) {//isChef of partition
 				sum+=(getEii(i)-getAii(i));
 			}
 		}
 		return sum;
 	}
 
-	public void performFusion(int i, int j) {
-		// TODO Auto-generated method stub
+	// all nodes inside set a go inside set b 
+	public void performFusion(int a, int b, int totalNbEii) {
+		if(partitions[a][2]!=1 || partitions[b][2]!=1) {
+			System.out.println("NOT CHEF : "+a+" "+b);
+			return;
+		}
+		partitions[b][3] = totalNbEii;
+		partitions[b][5] += partitions[a][5];
+		nbActualClusters--;
+		int clusterIdA = partitions[a][1];
+		int clusterIdB = partitions[b][1];
 		
+		partitions[a][2]=0;
+		partitions[a][4]=0;
+		partitions[a][5]=0;
+		for(int i =0;i<nbNodes;i++) {
+			if(partitions[i][1]==clusterIdA) {
+				partitions[i][1] = clusterIdB;
+				partitions[b][4]++;
+			}
+		}
 	}
-
+	
+	public int [][] getClusters() {
+		int [][] clusters = new int[nbNodes][];
+		int [] indexUnderCluster = new int[nbNodes];
+		
+		for(int i =0;i<nbNodes;i++) {
+			if(partitions[i][2]==1) {//ischef
+				clusters[partitions[i][1]]= new int[partitions[i][4]];
+			}
+		}
+		
+		
+		
+		int cluster;
+		for(int i =0;i<nbNodes;i++) {
+			cluster = partitions[i][1];
+			clusters[cluster][indexUnderCluster[cluster]]=partitions[i][0];
+			indexUnderCluster[cluster]++;
+		}
+		return clusters;
+	}
+	
+	public static void printClusters(int[][] clusters) {
+		for(int i=0;i<clusters.length;i++) {
+			if(clusters[i]==null) {
+				continue;
+			}
+			System.out.print('[');
+			for(int j=0;j<clusters[i].length;j++) {
+				System.out.print(clusters[i][j]);
+				if(j<clusters[i].length-1) {
+					System.out.print(',');
+				}
+			}
+			
+			System.out.print(']');
+		}
+	}
+	
+	public static void writeClusters(int[][] clusters,double Q, OutputStream out) throws IOException  {
+		
+		String header = "# "+clusters.length+" clusters,Q="+Q+"\n";
+		out.write(header.getBytes());
+		for(int i=0;i<clusters.length;i++) {
+			if(clusters[i]==null) {
+				continue;
+			}
+			for(int j=0;j<clusters[i].length;j++) {
+				if(i+1==clusters.length && j+1==clusters[i].length) { //avoid last jumpLine
+					out.write((clusters[i][j]+" "+i).getBytes());
+				}else {
+					out.write((clusters[i][j]+" "+i+"\n").getBytes());
+				}
+			}
+		}
+		
+		out.flush();
+	}
+	
+	
 }
 
 class Node {
@@ -198,7 +310,7 @@ class Node {
 		this.id = id;
 		this.positionInArrayList = positionInArrayList;
 		this.paritionId=positionInArrayList;
-		this.directNeighbours = new ArrayList<>(); 	//better than linkedList for the parallele version without marqued technique
+		this.directNeighbours = new ArrayList<>();
 	}
 	
 	public void incrNeighbours() {

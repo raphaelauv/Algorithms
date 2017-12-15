@@ -51,11 +51,28 @@ public final class ManageInput{
 		return true;
 
 	}
+	
+	public static String parseOptions(String[] args) {
 		
-	public static Graph creatGraph(String[] args) {
+		if (args.length < 1 || args.length>2) {
+			ManageInput.missingArgs();
+			return null;
+		}
+		String nameFileInput=null;
+		for(int i=0;i<args.length;i++) {
+			if(args[i].equals("-v")) {
+				Modularity.verbose=true;
+			}else {
+				nameFileInput=args[i];
+			}
+		}
+		return nameFileInput;
+	}
+	
+	public static Graph creatGraph(String args) {
 		
 		try {
-			BufferedReader br = new BufferedReader(new FileReader(args[0]));
+			BufferedReader br = new BufferedReader(new FileReader(args));
 			Graph myGraph = new Graph();
 
 			if (!parseAndFillGraph2(myGraph, br)) {
@@ -74,7 +91,7 @@ public final class ManageInput{
 	}
 	
 	public static void missingArgs() {
-		System.out.println("il manque arguments");
-        System.out.println("Pour exécuter : java BetweennessCentrality [nom_du_fichier] [o]");
+		System.out.println("erreur arguments");
+        System.out.println("Pour exécuter : java Modularity [graph_name_file] [-v]");
 	}
 }

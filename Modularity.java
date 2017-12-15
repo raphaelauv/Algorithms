@@ -1,71 +1,28 @@
-import java.util.ArrayDeque;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-class FixedDataStruckPool{
-	private int nbStruck;	
-	private int nbStackCreated;
-	private ConcurrentLinkedDeque<Queue<Node>> listStack;
-
-	public FixedDataStruckPool(int nbStruck) {
-		this.nbStruck = nbStruck+1;
-		this.listStack = new ConcurrentLinkedDeque<>();
-	}
-	public Queue<Node> getStack() {
-		if(nbStackCreated<nbStruck) {
-			Queue<Node> struck = new ArrayDeque<>();
-			nbStackCreated++;
-			return struck;
-		}else {
-			return listStack.poll();
-		}
-	}
-	
-	public void realeaseStack(Queue<Node>struck) {
-		struck.clear();
-		listStack.addFirst(struck);
-	}
-}
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 
-
-class EmptyResult{
-}
-
-class Let_Bet_V implements Function<Node,EmptyResult> {
+class Let_getPprime_QPprime implements Function<int[],double []> {
 	
 	ArrayList<Node> listNodes;
-	public Let_Bet_V(ArrayList<Node> listNodes) {
+	public Let_getPprime_QPprime(ArrayList<Node> listNodes) {
 		this.listNodes=listNodes;
 	}
 	
 	@Override
-	public EmptyResult apply(Node nodeV) {
+	public double[] apply(int[] aAndB) {
 	
-		
-		return null;
-		 
-	}
-}
-
-class Let_BFS implements Function<Node,EmptyResult>{
-
-	FixedDataStruckPool dataPool;
-	public Let_BFS(FixedDataStruckPool dataPool) {
-		this.dataPool=dataPool;
-	}
-	
-	public EmptyResult apply(Node actualNode) {
-		
-		Queue<Node> stack = dataPool.getStack();
-		stack.add(actualNode);
-
-		dataPool.realeaseStack(stack);
-		//actualNode.printfAllmyNeighboursInfo();
-		return null;
+		return new double[2];
 	}
 }
 
@@ -82,44 +39,75 @@ public class Modularity {
 	
 		int nbNodes = listNodes.size();
 		Partition myParti = new Partition(myGraph);
-		
+
 		double qIter;
-		double qMax=0;
+		int nbEiiIter;
+		double qMax=-1;
 		
-		int nbParitions=0;
-		double qpPrime;
+		double [] qpPrime;
 		int [] pSuiv= new int[2];
+		 
+		int[][] clusters =null;
 		
-		for (int i=0;i<nbNodes;i++) {
+		boolean newBest;
+		for (int i=0;i<nbNodes-1;i++) {
 			qIter=-1;
+			nbEiiIter=-1;
+			newBest=false;
 			for( int a=0;a<nbNodes;a++) {
-				for( int b=0;b<nbNodes;b++) {
+				for( int b=a;b<nbNodes;b++) {
 					if(a==b) {
 						continue;
 					}
 					if(!myParti.isChefs(a,b)) {
 						continue;
 					}
-					qpPrime = myParti.getQP(a,b);
-					if(qpPrime>qIter) {
+					qpPrime = myParti.getPprime_QPprime(a,b);
+					if(qpPrime[0]>qIter) {
 						pSuiv[0]=a;
 						pSuiv[1]=b;
-						qIter=qpPrime;
+						qIter=qpPrime[0];
+						nbEiiIter=(int) qpPrime[1];
 					}
-					
 				}
 			}
 			
-			myParti.performFusion(pSuiv[0],pSuiv[1]);
+			myParti.performFusion(pSuiv[0],pSuiv[1],nbEiiIter);
+			//System.out.println("FUSION "+pSuiv[0]+" "+pSuiv[1]);
 			if(qIter>qMax) {
 				qMax=qIter;
+				clusters=myParti.getClusters();
+				newBest=true;
+			}
+			if(verbose) {
+				if(newBest) {
+					Partition.printClusters(clusters);	
+				}else {
+					Partition.printClusters(myParti.getClusters());
+				}
+				
+				System.out.println(" : "+qIter);
 			}
 			
 		}
 		
+		String outputFileName ="out";
+		Path file2 = Paths.get("./" + outputFileName+".clu");
+
+		OutputStream out;
+		try {
+			out = new BufferedOutputStream(Files.newOutputStream(file2, CREATE, TRUNCATE_EXISTING));
+			Partition.writeClusters(clusters,qMax,out);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
-		//print(myParti);
-		return null;
+		
+		return;
+		
+		
+		
 		/*
 		int corePoolSize = Runtime.getRuntime().availableProcessors();
 		
@@ -141,14 +129,18 @@ public class Modularity {
 		//System.out.println("nb edges : "+myGraph.nbEdges);
 	}
 
-	
+	public static boolean verbose=false;
 	
 	public static void main(String[] args) {
-		if (args.length < 1) {
+		
+		String nameGraphFile =ManageInput.parseOptions(args);
+		
+		if(nameGraphFile==null) {
 			ManageInput.missingArgs();
 			return;
 		}
-		Graph myGraph = ManageInput.creatGraph(args);
+		
+		Graph myGraph = ManageInput.creatGraph(nameGraphFile);
 		if(myGraph==null) {return;}
 		
 		ManageInput.printMemoryStart();
