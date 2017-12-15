@@ -52,7 +52,7 @@ public class Modularity {
 	/*
 	 * parallelised version
 	 */
-	public static void printAllBetweennessCentralityPAR(Graph myGraph) {
+	public static void printAllModularityPAR(Graph myGraph) {
 		
 		long startTime = System.nanoTime();
 		
@@ -135,24 +135,26 @@ public class Modularity {
 		System.out.println(endTime - startTime);
 	}
 	
-	public static void printAllBetweennessCentrality(Graph myGraph) {
+	public static void printAllModularity(Graph myGraph) {
 		
 		long startTime = System.nanoTime();
 		
 		int nbNodes= myGraph.nbNodes;
 		Partition myParti = new Partition(myGraph);
-
+	
 		double qIter=-1;
 		int nbEiiIter;
 		double qMax=-1;
-		
+		//double qMax=0;
 		double [] qpPrime;
 		int [] pSuiv= new int[2];
 		 
 		int[][] clusters =null;
 		
 		boolean newBest;
+		double diffç_qpPrime_qIter=0;
 		for (int i=0;i<nbNodes-1;i++) {
+			//qIter=-1;
 			qIter=-1;
 			nbEiiIter=-1;
 			newBest=false;
@@ -165,19 +167,25 @@ public class Modularity {
 						continue;
 					}
 					qpPrime = myParti.getPprime_QPprime(a,b);
+					//diffç_qpPrime_qIter=myParti.getQP_OPT(a,b);
 					if(qpPrime[0]>qIter) {
+					//if(diffç_qpPrime_qIter>qIter) {
 						pSuiv[0]=a;
 						pSuiv[1]=b;
+						//qIter=diffç_qpPrime_qIter;
 						qIter=qpPrime[0];
 						nbEiiIter=(int) qpPrime[1];
 					}
 				}
 			}
 			
+			//myParti.performFusion_OPT(pSuiv[0],pSuiv[1]);
 			myParti.performFusion(pSuiv[0],pSuiv[1],nbEiiIter);
-			//System.out.println("FUSION "+pSuiv[0]+" "+pSuiv[1]);
+
+			//if(qIter+qMax>qMax) {
 			if(qIter>qMax) {
 				qMax=qIter;
+				//qMax+=qIter;
 				clusters=myParti.getClusters();
 				newBest=true;
 			}
@@ -188,9 +196,9 @@ public class Modularity {
 					Partition.printClusters(myParti.getClusters());
 				}
 				
-				System.out.println(" : "+qIter);
+				System.out.println(" : "+qMax);
+				//System.out.println(" : "+qIter);
 			}
-			
 		}
 		System.out.println("RESULT");
 		Partition.printClusters(clusters);
@@ -217,8 +225,8 @@ public class Modularity {
 		if(myGraph==null) {return;}
 		
 		ManageInput.printMemoryStart();
-		printAllBetweennessCentrality(myGraph);
-		//printAllBetweennessCentralityPAR(myGraph);
+		printAllModularity(myGraph);
+		//printAllModularityPAR(myGraph);
 		ManageInput.printMemoryEND();
 		
 	}

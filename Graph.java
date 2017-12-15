@@ -34,33 +34,33 @@ public class Graph {
 		}
 	}
 	
-	/*
+	
 	 
-	public int[][] getMatriceAdjency(){
-		int[][] adjencyMatrice = new int[nbNodes][nbNodes];
+	public int[][] getMatrix(){
+		int[][] matrix = new int[nbNodes][nbNodes];
 		
 		
 		for(Node t : listNodes) {
 			for(Node n : t.directNeighbours) {
-				adjencyMatrice[t.positionInArrayList][n.positionInArrayList]=1;
+				matrix[t.positionInArrayList][n.positionInArrayList]=1;
 			}
 			//t.directNeighbours.clear(); //TODO
 		}
 		
-		return adjencyMatrice;
+		return matrix;
 	}
 	
-	public static void printAdjency(int[][] adjency) {
-		for(int i=0; i<adjency.length;i++) {
-			for(int j=0; j<adjency.length;j++) {
-				System.out.print(adjency[i][j]+" ");
+	public static void printMatrix(int[][] matrix) {
+		System.out.println("\n----------------");
+		for(int i=0; i<matrix.length;i++) {
+			for(int j=0; j<matrix.length;j++) {
+				System.out.print(matrix[i][j]+" ");
 			}
 			System.out.println();
 		}
 		System.out.println("----------------");
 	}
-	
-	*/
+
 }
 
 
@@ -72,6 +72,7 @@ class Partition{
 	int nbEdges;
 	int nbNodes;
 	int equation4m2;
+	int [][] matrix;
 	ArrayList<Node> listNodes;
 	
 	public Partition(Graph myGraph) {
@@ -80,6 +81,9 @@ class Partition{
 		this.nbEdges = myGraph.nbEdges;
 		this.listNodes = myGraph.getListeNodes();
 	
+		this.matrix= myGraph.getMatrix();
+		
+		
 		this.partitions = new int[nbNodes][6];
 		Node tmp;
 		for(int i=0; i<myGraph.nbNodes;i++) {
@@ -138,6 +142,10 @@ class Partition{
 
 	}
 	
+	
+	/*
+	 * for the aggregative algorithm 
+	 */
 	public int nbEii(int a,int b) {
 		
 		//System.out.println();
@@ -213,7 +221,22 @@ class Partition{
 	
 	
 	/*
-	 * iterative version
+	 * iterative optimised version
+	 * O(1)
+	 */
+	public double getQP_OPT(int a , int b) {
+		
+		int degA =  partitions[a][5];
+		int degB =  partitions[b][5];
+		int mAB = matrix[a][b];
+		return (mAB/(double)nbEdges) - ((degA*degA)/(double)equation4m2 ) + ((degB*degB)/(double)equation4m2 );
+		
+	}
+	
+	
+	/*
+	 * iterative aggregative version
+	 * complexity : O(m) 
 	 */
 	public double getQP() {
 		double sum=0;
@@ -226,7 +249,8 @@ class Partition{
 	}
 	
 	/*
-	 * parallelizable version
+	 * parallelizable aggregative version
+	 * complexity : O(m) 
 	 */
 	public double getQP(int a , int b) {
 
@@ -270,7 +294,52 @@ class Partition{
 		return sum;
 	}
 
-	// all nodes inside set a go inside set b 
+	public void performFusion_OPT(int a, int b) {
+		if(partitions[a][2]!=1 || partitions[b][2]!=1) {
+			System.out.println("NOT CHEF : "+a+" "+b);
+			return;
+		}
+		
+		
+		
+		for(int i=0;i<nbNodes;i++) {
+			
+			if(i==b) {
+				continue;
+			}
+			
+			if(findSet(partitions[i][1])==a) {
+				partitions[i][1]=b;
+			}
+			
+			matrix[b][i]+=matrix[a][i];
+			matrix[i][b]=matrix[b][i];
+			
+			//System.out.println("a :"+a+" i:"+i);
+			//System.out.println("i :"+i+" a:"+a);
+			matrix[i][a]=0;
+			matrix[a][i]=0;
+		
+		}
+		matrix[a][b]=0;
+		matrix[b][a]=0;
+
+		nbActualClusters--;
+		partitions[b][5]+= partitions[a][5];
+		partitions[b][4]+=partitions[a][4];
+		//partitions[a][1]=b;
+		partitions[a][2]=0;
+		partitions[a][4]=0;
+		partitions[a][5]=0;
+		
+		
+		//Graph.printMatrix(matrix);
+		//System.out.println("a :"+a+" b:"+b);
+		
+	}
+	
+	
+	// all nodes inside set A go inside set B 
 	public synchronized void performFusion(int a, int b, int totalNbEii) {
 		if(partitions[a][2]!=1 || partitions[b][2]!=1) {
 			System.out.println("NOT CHEF : "+a+" "+b);
