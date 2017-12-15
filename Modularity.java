@@ -127,12 +127,13 @@ public class Modularity {
 				System.out.println(" : "+qIterBest[0]);
 			}
 		}
-		System.out.println("RESULT");
+		System.out.println("\nRESULT");
 		Partition.printClusters(clusters);
 		System.out.println(" : "+qMax);
+		writeFile(clusters,qMax);
 		
 		long endTime = System.nanoTime();
-		System.out.println(endTime - startTime);
+		System.out.println(endTime - startTime+"\n");
 	}
 	
 	public static void printAllModularity(Graph myGraph) {
@@ -152,9 +153,8 @@ public class Modularity {
 		int[][] clusters =null;
 		
 		boolean newBest;
-		double diffç_qpPrime_qIter=0;
+		//double diffç_qpPrime_qIter=0;
 		for (int i=0;i<nbNodes-1;i++) {
-			//qIter=-1;
 			qIter=-1;
 			nbEiiIter=-1;
 			newBest=false;
@@ -196,17 +196,17 @@ public class Modularity {
 					Partition.printClusters(myParti.getClusters());
 				}
 				
-				System.out.println(" : "+qMax);
-				//System.out.println(" : "+qIter);
+				//System.out.println(" : "+qMax);
+				System.out.println(" : "+qIter);
 			}
 		}
-		System.out.println("RESULT");
+		System.out.println("\nRESULT");
 		Partition.printClusters(clusters);
 		System.out.println(" : "+qMax);
 		writeFile(clusters,qMax);
 		
 		long endTime = System.nanoTime();
-		System.out.println(endTime - startTime);
+		System.out.println(endTime - startTime+"\n");
 		
 	}
 
@@ -226,7 +226,7 @@ public class Modularity {
 		
 		ManageInput.printMemoryStart();
 		printAllModularity(myGraph);
-		//printAllModularityPAR(myGraph);
+		printAllModularityPAR(myGraph);
 		ManageInput.printMemoryEND();
 		
 	}

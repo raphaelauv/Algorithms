@@ -35,18 +35,13 @@ public class Graph {
 	}
 	
 	
-	 
 	public int[][] getMatrix(){
 		int[][] matrix = new int[nbNodes][nbNodes];
-		
-		
 		for(Node t : listNodes) {
 			for(Node n : t.directNeighbours) {
 				matrix[t.positionInArrayList][n.positionInArrayList]=1;
 			}
-			//t.directNeighbours.clear(); //TODO
 		}
-		
 		return matrix;
 	}
 	
@@ -80,28 +75,40 @@ class Partition{
 		this.nbNodes=nbActualClusters;
 		this.nbEdges = myGraph.nbEdges;
 		this.listNodes = myGraph.getListeNodes();
-	
 		this.matrix= myGraph.getMatrix();
-		
+		this.equation4m2 = 4 *( nbEdges * nbEdges);
 		
 		this.partitions = new int[nbNodes][6];
 		Node tmp;
 		for(int i=0; i<myGraph.nbNodes;i++) {
 			tmp = listNodes.get(i);
 			
-			this.partitions[i][0] = tmp.id; //id in input graph file
-			this.partitions[i][1] = tmp.paritionId; // positionInArrayList , id of cluster
-			this.partitions[i][2] = 1; //isChef
-			this.partitions[i][3] = 0;//Eii
-			this.partitions[i][4] = 1;// sizePartition
+			this.partitions[i][0] = tmp.id; // id in input graph file
+			this.partitions[i][1] = tmp.positionInArrayList; // positionInArrayList , id of cluster
+			this.partitions[i][2] = 1; // isChef of cluster
+			this.partitions[i][3] = 0; // Eii
+			this.partitions[i][4] = 1; // sizePartition
 			this.partitions[i][5] = tmp.degree; // size degrees of cluster
 		}
 		
-		this.equation4m2 = 4 *( nbEdges * nbEdges);
+		
 	}
 	
-	public synchronized boolean isChefs(int Va,int Vb) {
-		if(partitions[Va][2]==1 && partitions[Vb][2]==1) {
+	/*
+	 * retur True if a and b are chef of clusters
+	 */
+	public boolean isChefs(int a,int b) {
+		
+		int isChefA;
+		synchronized(partitions[a]) {
+			isChefA=partitions[a][2];
+		}
+		int isChefB;
+		synchronized(partitions[b]) {
+			isChefB=partitions[b][2];
+		}
+		
+		if(isChefA==1 && isChefB==1) {
 			//System.out.print("\nchef "+Va+" "+Vb);
 			return true;
 		}else {
@@ -110,35 +117,75 @@ class Partition{
 		}
 	}
 	
-	public synchronized double getEii(int Vi) {
-		return partitions[Vi][3]/(double)nbEdges;
+	public double getEii(int Vi) {
+		int val;
+		synchronized (partitions[Vi]) {
+			val =partitions[Vi][3]; 
+		}
+		return val/(double)nbEdges;
+		
 	}
 	
 	
-	public synchronized double getAii(int idChef) {
-		int sumDegrees = partitions[idChef][5];
+	public double getAii(int idChef) {
+		
+		int sumDegrees;
+		synchronized (partitions[idChef]) {
+			sumDegrees = partitions[idChef][5]; 
+		}
+
 		return (sumDegrees*sumDegrees) / (double) equation4m2;
 	}
 	
 	/*
-	 * find the reel set of the node a
+	 * find the reel cluster of the node a
+	 * non conccurent version
+	 */
+	public int findSet2(int a) {
+		
+		if(partitions[a][2]==1) {
+			return a;
+		}
+		int setChef = partitions[a][1];
+		while(partitions[setChef][2]!=1) {
+			setChef=partitions[setChef][1];
+		}
+		partitions[a][1]=setChef;
+		return setChef;
+
+	}
+	
+	
+	/*
+	 * find the reel cluster of the node a
+	 * concurrent
 	 */
 	public int findSet(int a) {
 		
+		int setChef;
 		synchronized(partitions[a]) {
-			if(partitions[a][2]==1) {
-				return partitions[a][1];
-			}
-			
-			int setChef =partitions[a][2];
-
-			while(partitions[setChef][2]!=1) {
-				setChef=partitions[setChef][2];
-			}
-			
-			partitions[a][1]=setChef;
-			return setChef;
+			setChef=partitions[a][2];
 		}
+		if(setChef==1) {
+			return a;
+		}
+	
+		boolean notFind=true;
+		while(notFind) {
+			synchronized (partitions[setChef]) {
+				if(partitions[setChef][2]==1) {
+					notFind=false;
+				}else {
+					setChef=partitions[setChef][1];
+				}
+			}
+		}
+		
+		synchronized(partitions[a]) {
+			partitions[a][1]=setChef;
+		}
+		return setChef;
+		
 
 	}
 	
@@ -158,7 +205,7 @@ class Partition{
 			if(idSet==b || idSet==a) {
 				tmp = listNodes.get(i);
 				for(Node n:tmp.directNeighbours) {
-					idSet=findSet(partitions[n.paritionId][1]);
+					idSet=findSet(partitions[n.positionInArrayList][1]);
 					if(idSet==b || idSet==a) {
 						//System.out.println(tmp.id+" CONNECTED "+n.id);
 						nbEii++;
@@ -278,7 +325,6 @@ class Partition{
 				}
 				else if(partitions[i][1]==b) {
 					itsB=true;
-					
 				}
 				else if(partitions[i][2]==1) {//isChef of partition
 					itsChef=true;
@@ -294,13 +340,11 @@ class Partition{
 		return sum;
 	}
 
-	public void performFusion_OPT(int a, int b) {
+	public synchronized void performFusion_OPT(int a, int b) {
 		if(partitions[a][2]!=1 || partitions[b][2]!=1) {
 			System.out.println("NOT CHEF : "+a+" "+b);
 			return;
 		}
-		
-		
 		
 		for(int i=0;i<nbNodes;i++) {
 			
@@ -354,12 +398,16 @@ class Partition{
 		partitions[a][2]=0;
 		partitions[a][4]=0;
 		partitions[a][5]=0;
+		//partitions[a][1]=clusterIdB;
+		
+		
 		for(int i =0;i<nbNodes;i++) {
 			if(partitions[i][1]==clusterIdA) {
 				partitions[i][1] = clusterIdB;
 				partitions[b][4]++;
 			}
 		}
+		
 	}
 	
 	/*
@@ -430,16 +478,11 @@ class Node {
 	final int id;
 	final int positionInArrayList;
 	int degree;
-	
-	
 	Collection<Node> directNeighbours;
-	int paritionId;
-	boolean isChefCluster=true;
 		
 	public Node(int id,int positionInArrayList) {
 		this.id = id;
 		this.positionInArrayList = positionInArrayList;
-		this.paritionId=positionInArrayList;
 		this.directNeighbours = new ArrayList<>();
 	}
 	
@@ -450,5 +493,4 @@ class Node {
 	public void insertEdge(Node neighbour) {
 		this.directNeighbours.add(neighbour);
 	}
-	
 } 
