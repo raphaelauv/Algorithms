@@ -239,7 +239,7 @@ class Partition{
 		result[0]=getQP();
 		result[1]=partitions[b][3];
 		
-		
+
 		partitions[a][1] = actualClusterA;
 		partitions[a][2] = 1;
 		partitions[a][5] = actualDegreesOfA;
@@ -383,30 +383,52 @@ class Partition{
 	}
 	
 	
-	// all nodes inside set A go inside set B 
-	public synchronized void performFusion(int a, int b, int totalNbEii) {
+	/*
+	 * all nodes inside set A go inside set B
+	 * complexity 0(1) 
+	 */
+	public void performFusion(int a, int b, int totalNbEii) {
+		/*
 		if(partitions[a][2]!=1 || partitions[b][2]!=1) {
 			System.out.println("NOT CHEF : "+a+" "+b);
 			return;
 		}
-		partitions[b][3] = totalNbEii;
-		partitions[b][5] += partitions[a][5];
+		*/
+		
+		int clusterIdB;
+		synchronized (partitions[b]) {
+			clusterIdB = partitions[b][1];
+			partitions[b][3] = totalNbEii;
+		}
+		int a4;
+		int a5;
+		
+		synchronized (partitions[a]) {
+			a4 = partitions[a][4];
+			a5 = partitions[a][5];
+			partitions[a][1]=clusterIdB;
+			partitions[a][2]=0;
+			partitions[a][4]=0;
+			partitions[a][5]=0;
+		}
+		
+		synchronized (partitions[b]) {
+			partitions[b][4]+=a4;
+			partitions[b][5] += a5;
+		}
+		
 		nbActualClusters--;
-		int clusterIdA = partitions[a][1];
-		int clusterIdB = partitions[b][1];
 		
-		partitions[a][2]=0;
-		partitions[a][4]=0;
-		partitions[a][5]=0;
-		//partitions[a][1]=clusterIdB;
+		//int clusterIdA = partitions[a][1];
 		
-		
+		/*
 		for(int i =0;i<nbNodes;i++) {
 			if(partitions[i][1]==clusterIdA) {
 				partitions[i][1] = clusterIdB;
 				partitions[b][4]++;
 			}
 		}
+		*/
 		
 	}
 	
@@ -426,7 +448,7 @@ class Partition{
 		
 		int cluster;
 		for(int i =0;i<nbNodes;i++) {
-			cluster = partitions[i][1];
+			cluster = findSet(partitions[i][1]);
 			clusters[cluster][indexUnderCluster[cluster]]=partitions[i][0];
 			indexUnderCluster[cluster]++;
 		}
@@ -466,7 +488,6 @@ class Partition{
 				}
 			}
 		}
-		
 		out.flush();
 	}
 	
