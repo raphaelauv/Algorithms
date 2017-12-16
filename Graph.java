@@ -262,7 +262,6 @@ class Partition{
 		synchronized (partitions[b]) {
 			result[1]=partitions[b][3];
 		}
-		
 		return result;
 	}
 	

@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -55,9 +54,47 @@ class Let_getPprime_QPprime implements Function<int[],double []> {
 
 public class Modularity {
 	
-	public static void endAlgo(String algoName,long startTime,int[][] clusters,double qMax) {
+	public static String nameOutput;
+	public static boolean verbose=false;
+
+	public static void main(String[] args) {
 		
-		System.out.println("\nRESULT"+algoName);
+		String nameGraphFile =ManageInput.parseOptions(args);
+		
+		if(nameGraphFile==null) {
+			ManageInput.missingArgs();
+			return;
+		}
+		
+		Graph myGraph = ManageInput.creatGraph(nameGraphFile);
+		if(myGraph==null) {return;}
+		
+		ManageInput.printMemoryStart();
+		printModularity(myGraph,true); //faster
+		//printAllModularity_PAR(myGraph,true); //faster in non optimised mode
+		
+		ManageInput.printMemoryEND();
+		
+	}
+	
+	
+	public static void editname(boolean optimized ,boolean parallel) {
+		
+		if(optimized) {
+			nameOutput="OPTIMIZED ";
+		}else {
+			nameOutput="BASIC ";
+		}
+		if(parallel) {
+			nameOutput+="PARALLEL";
+		}else {
+			nameOutput+="ITERATIVE";
+		}
+	}
+	
+	public static void endAlgo(long startTime,int[][] clusters,double qMax) {
+		
+		System.out.println("\nRESULT "+nameOutput);
 		Partition.printClusters(clusters);
 		System.out.println(" : "+qMax);
 		writeFile(clusters,qMax);
@@ -94,7 +131,7 @@ public class Modularity {
 	/*
 	 * parallelised version
 	 */
-	public static void printAllModularity_PAR(Graph myGraph,boolean optimisedVersion) {
+	public static void printModularity_PAR(Graph myGraph,boolean optimisedVersion) {
 		
 		long startTime = System.nanoTime();
 		
@@ -118,6 +155,7 @@ public class Modularity {
 			qMax = -1;
 		}
 		
+		
 		for (int i=0;i<nbNodes-1;i++) {
 			
 			arrayofTuples.clear();
@@ -138,21 +176,20 @@ public class Modularity {
 			
 			Stream<int[]> streamOfNodes = arrayofTuples.stream().parallel();
 			
-			double resultToShow;
+			double newResult;
 			
 			if(optimisedVersion) {
 				Stream<double[]> streamOfResults = streamOfNodes.map(new Let_getQP_OPT(myParti));
-				double[] qIterBestOP = streamOfResults.reduce(new double[]{-1,0,0},(qIterReduce ,diffç_qpPrime_qIter) -> {
+				Optional<double[]> qIterBestOP = streamOfResults.reduce((qIterReduce ,diffç_qpPrime_qIter) -> {
 					if (diffç_qpPrime_qIter[0] > qIterReduce[0]) {
 						qIterReduce[0] = diffç_qpPrime_qIter[0];
 						qIterReduce[1] = diffç_qpPrime_qIter[1];
 						qIterReduce[2] = diffç_qpPrime_qIter[2];
 					}
-					return Arrays.copyOf(qIterReduce,qIterReduce.length);
-					
+					return qIterReduce;
 				});
 				
-				double[] diffç_qpPrime_qIterBest= qIterBestOP;
+				double[] diffç_qpPrime_qIterBest= qIterBestOP.get();
 				
 				qIter = diffç_qpPrime_qIterBest[0];
 				pSuiv[0]=(int) diffç_qpPrime_qIterBest[1];
@@ -160,27 +197,22 @@ public class Modularity {
 				
 				myParti.performFusion_OPT(pSuiv[0],pSuiv[1]);
 				
-				resultToShow=qIter+qMax;
+				newResult=qIter+qMax;
 				
 			}else {
 				Stream<double[]> streamOfResults = streamOfNodes.map(new Let_getPprime_QPprime(myParti));
-				double[] qIterBestOP = streamOfResults.reduce(new double[]{-1,0,0,0},(qIterReduce,qpPrime) -> {
+				Optional<double[]> qIterBestOP = streamOfResults.reduce((qIterReduce,qpPrime) -> {
 					if (qpPrime[0] > qIterReduce[0]) {
-						if(qpPrime[0]>1) {
-							//TODO bug
-							System.out.println("ICI :"+qpPrime[0]);
-						}
 						qIterReduce[0] = qpPrime[0];
 						qIterReduce[1] = qpPrime[1];
 						qIterReduce[2] = qpPrime[2];	
 						qIterReduce[3] = qpPrime[3];
 						
 					}
-					return Arrays.copyOf(qIterReduce,qIterReduce.length);
-					//return qIterReduce;
+					return qIterReduce;
 				});
 				
-				double[] qIterBest= qIterBestOP;
+				double[] qIterBest= qIterBestOP.get();
 				
 				qIter=qIterBest[0];
 				pSuiv[0]=(int) qIterBest[2];
@@ -189,29 +221,25 @@ public class Modularity {
 				
 				myParti.performFusion(pSuiv[0],pSuiv[1],nbEiiIter);
 				
-				resultToShow=qIter;
+				newResult=qIter;
 			}
 			
-			if(resultToShow>qMax) {
+			if(newResult>qMax) {
 				if(optimisedVersion) {
-					
 					qMax += qIter;
 				}else {
-					System.out.println("qMax : "+qMax +" Qiter: "+qIter);
 					qMax = qIter;
-					System.out.println(qMax);
 				}
 				clusters=myParti.getClusters();
 				newBest=true;
 			}
 			
-			
 			if(verbose) {
-				doVerbose(newBest,myParti,clusters,resultToShow);
+				doVerbose(newBest,myParti,clusters,newResult);
 			}
 		}
-		
-		endAlgo("OPT PAR",startTime,clusters,qMax);
+		editname(optimisedVersion,true);
+		endAlgo(startTime,clusters,qMax);
 	}
 
 
@@ -219,7 +247,7 @@ public class Modularity {
 	/*
 	 * iterative version
 	 */
-	public static void printAllModularity(Graph myGraph,boolean optimisedVersion) {
+	public static void printModularity(Graph myGraph,boolean optimisedVersion) {
 		
 		long startTime = System.nanoTime();
 		
@@ -240,7 +268,8 @@ public class Modularity {
 		int [] pSuiv= new int[2];
 		int[][] clusters =null;
 		boolean newBest;
-		double resultToShow;
+		double newResult;
+		
 		
 		if(optimisedVersion) {
 			qMax = 0;
@@ -283,14 +312,14 @@ public class Modularity {
 			
 			if(optimisedVersion) {
 				myParti.performFusion_OPT(pSuiv[0],pSuiv[1]);
-				resultToShow = qIter+qMax;
+				newResult = qIter+qMax;
 				
 			}else {
 				myParti.performFusion(pSuiv[0],pSuiv[1],nbEiiIter);
-				resultToShow= qIter;
+				newResult= qIter;
 			}
 			
-			if(resultToShow>qMax) {
+			if(newResult>qMax) {
 				if(optimisedVersion) {
 					qMax += qIter;
 				}else {
@@ -301,35 +330,11 @@ public class Modularity {
 			}
 			
 			if(verbose) {
-				doVerbose(newBest,myParti,clusters,resultToShow);
+				doVerbose(newBest,myParti,clusters,newResult);
 			}
 		
 		}
-		
-		endAlgo("OPT",startTime,clusters,qMax);
-		
-	}
-
-	
-	public static boolean verbose=false;
-	
-	public static void main(String[] args) {
-		
-		String nameGraphFile =ManageInput.parseOptions(args);
-		
-		if(nameGraphFile==null) {
-			ManageInput.missingArgs();
-			return;
-		}
-		
-		Graph myGraph = ManageInput.creatGraph(nameGraphFile);
-		if(myGraph==null) {return;}
-		
-		ManageInput.printMemoryStart();
-		printAllModularity(myGraph,true); //faster
-		//printAllModularity_PAR(myGraph,true);
-		
-		ManageInput.printMemoryEND();
-		
+		editname(optimisedVersion,false);
+		endAlgo(startTime,clusters,qMax);
 	}
 }
