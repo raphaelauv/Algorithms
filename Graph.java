@@ -117,7 +117,7 @@ class Partition{
 		}
 	}
 	
-	public double getEii(int Vi) {
+	private double getEii(int Vi) {
 		int val;
 		synchronized (partitions[Vi]) {
 			val =partitions[Vi][3]; 
@@ -127,7 +127,7 @@ class Partition{
 	}
 	
 	
-	public double getAii(int idChef) {
+	private double getAii(int idChef) {
 		
 		int sumDegrees;
 		synchronized (partitions[idChef]) {
@@ -141,7 +141,7 @@ class Partition{
 	 * find the reel cluster of the node a
 	 * non conccurent version
 	 */
-	public int findSet2(int a) {
+	private int findSet2(int a) {
 		
 		if(partitions[a][2]==1) {
 			return a;
@@ -160,7 +160,7 @@ class Partition{
 	 * find the reel cluster of the node a
 	 * concurrent
 	 */
-	public int findSet(int a) {
+	private int findSet(int a) {
 		
 		int setChef;
 		synchronized(partitions[a]) {
@@ -193,7 +193,7 @@ class Partition{
 	/*
 	 * for the aggregative algorithm 
 	 */
-	public int nbEii(int a,int b) {
+	private int nbEii(int a,int b) {
 		
 		//System.out.println();
 		int nbEii=0;
@@ -215,7 +215,7 @@ class Partition{
 		}
 		 
 		//System.out.println("interne "+b +" = "+nbEii/2);
-		return nbEii/2;
+		return nbEii/2; // because not orieted graph
 	}
 	
 
@@ -253,7 +253,7 @@ class Partition{
 	/*
 	 * parallelizable version
 	 */
-	public double[] getPprime_QPprimePAR(int a ,int b){
+	public double[] getPprime_QPprime_PAR(int a ,int b){
 	
 		
 		double [] result = new double[2];
@@ -266,6 +266,27 @@ class Partition{
 		return result;
 	}
 	
+	
+	/*
+	 * parallelizable optimised version
+	 * O(1)
+	 */
+	public double getQP_OP_PART(int a , int b) {
+		int degA;
+		synchronized (partitions[a]) {
+			degA =  partitions[a][5];	
+		}
+		int degB;
+		synchronized (partitions[b]) {
+			degB =  partitions[b][5];
+		}
+		int mAB;
+		synchronized (matrix[a]) {
+			mAB = matrix[a][b];	
+		}
+
+		return (mAB/(double)nbEdges) - ((degA*degA)/(double)equation4m2 ) + ((degB*degB)/(double)equation4m2 );
+	}
 	
 	/*
 	 * iterative optimised version
@@ -285,7 +306,7 @@ class Partition{
 	 * iterative aggregative version
 	 * complexity : O(m) 
 	 */
-	public double getQP() {
+	private double getQP() {
 		double sum=0;
 		for(int i=0; i<nbNodes;i++) {
 				if(partitions[i][2]==1) {//isChef of partition
@@ -299,7 +320,7 @@ class Partition{
 	 * parallelizable aggregative version
 	 * complexity : O(m) 
 	 */
-	public double getQP(int a , int b) {
+	private double getQP(int a , int b) {
 
 		int realnbEIIofB = nbEii(a,b);
 		int realDegreeB;
@@ -472,9 +493,20 @@ class Partition{
 		}
 	}
 	
+	/*
+	 * write cluster repartition for each node
+	 * complexity : 2*n ( n number of nodes)
+	 */
 	public static void writeClusters(int[][] clusters,double Q, OutputStream out) throws IOException  {
 		
-		String header = "# "+clusters.length+" clusters,Q="+Q+"\n";
+		int nbClusters = 0;
+		for(int i=0;i<clusters.length;i++) {
+			if(clusters[i]!=null) {
+				nbClusters++;
+			}
+		}
+		
+		String header = "# "+nbClusters+" clusters,Q="+Q+"\n";
 		out.write(header.getBytes());
 		for(int i=0;i<clusters.length;i++) {
 			if(clusters[i]==null) {

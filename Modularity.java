@@ -28,7 +28,7 @@ class Let_getQP_OPT implements Function<int[],double []> {
 	public double[] apply(int[] aAndB) {
 		int a =aAndB[0];
 		int b =aAndB[1];
-		double result = myParti.getQP_OPT(a,b);
+		double result = myParti.getQP_OP_PART(a,b);
 		return new double[] {result,a,b};
 	}
 }
@@ -47,7 +47,7 @@ class Let_getPprime_QPprime implements Function<int[],double []> {
 	public double[] apply(int[] aAndB) {
 		int a =aAndB[0];
 		int b =aAndB[1];
-		double [] result= myParti.getPprime_QPprimePAR(a,b);
+		double [] result= myParti.getPprime_QPprime_PAR(a,b);
 		return new double[] {result[0],result[1],a,b};
 	}
 }
@@ -63,6 +63,17 @@ public class Modularity {
 		writeFile(clusters,qMax);
 		long endTime = System.nanoTime();
 		System.out.println("TIME : "+ (endTime - startTime));
+	}
+	
+	public static void doVerbose(boolean newBest,Partition myParti,int[][] clusters,double resultToShow) {
+		
+		if(newBest) {
+			Partition.printClusters(clusters);	
+		}else {
+			Partition.printClusters(myParti.getClusters());
+		}	
+		System.out.println(" : "+resultToShow);
+	
 	}
 	
 	public static void writeFile(int[][] clusters,double qMax) {
@@ -153,7 +164,7 @@ public class Modularity {
 				
 			}else {
 				Stream<double[]> streamOfResults = streamOfNodes.map(new Let_getPprime_QPprime(myParti));
-				Optional<double[]> qIterBestOP = streamOfResults.reduce((qIterReduce,qpPrime) -> {
+				double[] qIterBestOP = streamOfResults.reduce(new double[]{-1,0,0,0},(qIterReduce,qpPrime) -> {
 					if (qpPrime[0] > qIterReduce[0]) {
 						if(qpPrime[0]>1) {
 							//TODO bug
@@ -169,7 +180,7 @@ public class Modularity {
 					//return qIterReduce;
 				});
 				
-				double[] qIterBest= qIterBestOP.get();
+				double[] qIterBest= qIterBestOP;
 				
 				qIter=qIterBest[0];
 				pSuiv[0]=(int) qIterBest[2];
@@ -203,16 +214,7 @@ public class Modularity {
 		endAlgo("OPT PAR",startTime,clusters,qMax);
 	}
 
-	public static void doVerbose(boolean newBest,Partition myParti,int[][] clusters,double resultToShow) {
-		
-		if(newBest) {
-			Partition.printClusters(clusters);	
-		}else {
-			Partition.printClusters(myParti.getClusters());
-		}	
-		System.out.println(" : "+resultToShow);
-	
-	}
+
 	
 	/*
 	 * iterative version
