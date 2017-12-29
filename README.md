@@ -1,7 +1,5 @@
 # Graph Modularity - Parallel version (MULTITHREADING) MAP-REDUCE
 
-Auvert Raphael
-
 ## Non oriented
 
 ### 1. PRECISIONS
