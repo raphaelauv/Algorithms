@@ -1,14 +1,12 @@
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 
 public class Graph {
 
 	private ArrayList<Node> listNodes;			//filed at the same time than the map , avoid to iterate later the map
-	private Map<Integer, Node> mapNodes;
+	private HashMap<Integer, Node> mapNodes;
 	int nbEdges;
 	int nbNodes;
 	
@@ -139,9 +137,11 @@ class Partition{
 	
 	/*
 	 * find the reel cluster of the node a
-	 * non conccurent version
+	 * non concurent version
+	 * 
 	 */
-	private int findSet2(int a) {
+	@Deprecated
+	private int findSet(int a) {
 		
 		if(partitions[a][2]==1) {
 			return a;
@@ -160,13 +160,15 @@ class Partition{
 	 * find the reel cluster of the node a
 	 * concurrent
 	 */
-	private int findSet(int a) {
+	private int findSet_PAR(int a) {
 		
+		int isChef;
 		int setChef;
 		synchronized(partitions[a]) {
-			setChef=partitions[a][2];
+			isChef=partitions[a][2];
+			setChef=partitions[a][1];
 		}
-		if(setChef==1) {
+		if(isChef==1) {
 			return a;
 		}
 	
@@ -185,8 +187,6 @@ class Partition{
 			partitions[a][1]=setChef;
 		}
 		return setChef;
-		
-
 	}
 	
 	
@@ -201,11 +201,11 @@ class Partition{
 		int idSet =0;
 		for(int i=0; i< nbNodes;i++) {
 			
-			idSet = findSet(partitions[i][1]);
+			idSet = findSet_PAR(partitions[i][1]);
 			if(idSet==b || idSet==a) {
 				tmp = listNodes.get(i);
 				for(Node n:tmp.directNeighbours) {
-					idSet=findSet(partitions[n.positionInArrayList][1]);
+					idSet=findSet_PAR(partitions[n.positionInArrayList][1]);
 					if(idSet==b || idSet==a) {
 						//System.out.println(tmp.id+" CONNECTED "+n.id);
 						nbEii++;
@@ -221,6 +221,7 @@ class Partition{
 
 	/*
 	 * iterative version
+	 * O(m)
 	 */
 	public double[] getPprime_QPprime(int a ,int b){
 		
@@ -252,6 +253,7 @@ class Partition{
 	
 	/*
 	 * parallelizable version
+	 * O(m)
 	 */
 	public double[] getPprime_QPprime_PAR(int a ,int b){
 	
@@ -360,27 +362,34 @@ class Partition{
 		return sum;
 	}
 
+	/*
+	 * parallelizable optimized version
+	 * complexity : O(n)
+	 */
 	public synchronized void performFusion_OPT(int a, int b) {
+		/*
 		if(partitions[a][2]!=1 || partitions[b][2]!=1) {
 			System.out.println("NOT CHEF : "+a+" "+b);
 			return;
 		}
-		
+		*/
 		for(int i=0;i<nbNodes;i++) {
 			
-			if(i==b) {
+			if(i==b || i==a) {
 				continue;
 			}
 			
-			if(findSet(partitions[i][1])==a) {
+			/*
+			if(findSet_PAR(partitions[i][1])==a) {
 				partitions[i][1]=b;
 			}
+			*/
 			
+			// add all connection a -> i and i -> a TO b -> i and i -> b
 			matrix[b][i]+=matrix[a][i];
 			matrix[i][b]=matrix[b][i];
 			
-			//System.out.println("a :"+a+" i:"+i);
-			//System.out.println("i :"+i+" a:"+a);
+			// remove all connection a -> i and i -> a
 			matrix[i][a]=0;
 			matrix[a][i]=0;
 		
@@ -389,16 +398,14 @@ class Partition{
 		matrix[b][a]=0;
 
 		nbActualClusters--;
-		partitions[b][5]+= partitions[a][5];
-		partitions[b][4]+=partitions[a][4];
-		//partitions[a][1]=b;
+		partitions[b][5] += partitions[a][5];
+		partitions[b][4] += partitions[a][4];
+		
+		partitions[a][1]=b;
 		partitions[a][2]=0;
 		partitions[a][4]=0;
 		partitions[a][5]=0;
 		
-		
-		//Graph.printMatrix(matrix);
-		//System.out.println("a :"+a+" b:"+b);
 		
 	}
 	
@@ -439,9 +446,9 @@ class Partition{
 		
 		nbActualClusters--;
 		
-		//int clusterIdA = partitions[a][1];
-		
+
 		/*
+		int clusterIdA = partitions[a][1];
 		for(int i =0;i<nbNodes;i++) {
 			if(partitions[i][1]==clusterIdA) {
 				partitions[i][1] = clusterIdB;
@@ -468,7 +475,7 @@ class Partition{
 		
 		int cluster;
 		for(int i =0;i<nbNodes;i++) {
-			cluster = findSet(partitions[i][1]);
+			cluster = findSet_PAR(partitions[i][1]);
 			clusters[cluster][indexUnderCluster[cluster]]=partitions[i][0];
 			indexUnderCluster[cluster]++;
 		}
@@ -512,14 +519,18 @@ class Partition{
 				continue;
 			}
 			for(int j=0;j<clusters[i].length;j++) {
-				if(i+1==clusters.length && j+1==clusters[i].length) { //avoid last jumpLine
+				
+				/* avoid last jumpLine
+				if(i+1==clusters.length && j+1==clusters[i].length) { 
 					out.write((clusters[i][j]+" "+i).getBytes());
 				}else {
 					out.write((clusters[i][j]+" "+i+"\n").getBytes());
 				}
+				*/
+				
+				out.write((clusters[i][j]+" "+i+"\n").getBytes());
 			}
 		}
-		out.flush();
 	}
 	
 	
@@ -530,7 +541,7 @@ class Node {
 	final int id;
 	final int positionInArrayList;
 	int degree;
-	Collection<Node> directNeighbours;
+	ArrayList<Node> directNeighbours;
 		
 	public Node(int id,int positionInArrayList) {
 		this.id = id;

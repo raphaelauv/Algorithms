@@ -5,7 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Optional;
+import java.util.PriorityQueue;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -51,15 +53,26 @@ class Let_getPprime_QPprime implements Function<int[],double []> {
 	}
 }
 
+class Truple{
+	int a;
+	int b;
+	double Qp;
+	public Truple(int a, int b, double qp) {
+		this.a = a;
+		this.b = b;
+		Qp = qp;
+	}
+}
 
 public class Modularity {
 	
 	public static String nameOutput;
 	public static boolean verbose=false;
-
+	public static String nameGraphFile;
+	
 	public static void main(String[] args) {
 		
-		String nameGraphFile =ManageInput.parseOptions(args);
+		nameGraphFile =ManageInput.parseOptions(args);
 		
 		if(nameGraphFile==null) {
 			ManageInput.missingArgs();
@@ -70,8 +83,10 @@ public class Modularity {
 		if(myGraph==null) {return;}
 		
 		ManageInput.printMemoryStart();
-		printModularity(myGraph,true); //faster
-		//printAllModularity_PAR(myGraph,true); //faster in non optimised mode
+		
+		
+		printModularity(myGraph,true); //iterative faster in optimized mode
+		//printModularity_PAR(myGraph,false); //parallel faster in non optimized mode
 		
 		ManageInput.printMemoryEND();
 		
@@ -114,17 +129,20 @@ public class Modularity {
 	}
 	
 	public static void writeFile(int[][] clusters,double qMax) {
-		String outputFileName ="out";
-		Path file2 = Paths.get("./" + outputFileName+".clu");
+		//String outputFileName ="out";
+		
+		Path file2 = Paths.get("./" + nameGraphFile+".clu");
 
 		OutputStream out;
 		try {
 			out = new BufferedOutputStream(Files.newOutputStream(file2, CREATE, TRUNCATE_EXISTING));
 			Partition.writeClusters(clusters,qMax,out);
+			out.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		
 	}
 		
@@ -146,7 +164,7 @@ public class Modularity {
 		boolean newBest;
 		int nbClusters=nbNodes;
 		
-		//faster than new array of array every pass of the loop
+		//faster than new int [nbClusters][2] every pass of the loop
 		ArrayList<int[]> arrayofTuples = new ArrayList<>(nbClusters); 
 		
 		if(optimisedVersion) {
@@ -154,7 +172,6 @@ public class Modularity {
 		}else {
 			qMax = -1;
 		}
-		
 		
 		for (int i=0;i<nbNodes-1;i++) {
 			
@@ -241,8 +258,6 @@ public class Modularity {
 		editname(optimisedVersion,true);
 		endAlgo(startTime,clusters,qMax);
 	}
-
-
 	
 	/*
 	 * iterative version
@@ -276,6 +291,24 @@ public class Modularity {
 		}else {
 			qMax = -1;
 		}
+		
+		/*
+		 * Heap solution
+		PriorityQueue<Truple> maxPQ = new PriorityQueue<Truple>((nbNodes*(nbNodes-1))/2,Collections.reverseOrder());
+		for( int a=0;a<nbNodes;a++) {
+			for( int b=a;b<nbNodes;b++) {
+				double rst= myParti.getQP_OPT(a,b);
+				maxPQ.add(new Truple(a,b,rst));
+			}
+		}
+		Truple tmp;
+		for( int a=0;a<nbNodes;a++) {
+			tmp=maxPQ.poll();
+			if(!myParti.isChefs(tmp.a,tmp.b)) {
+				continue;
+			}
+		}
+		*/
 		
 		for (int i=0;i<nbNodes-1;i++) {
 			qIter=-1;
