@@ -1,16 +1,3 @@
-<<<<<<< HEAD
-# Algorithms
-
-# ComplexNetworks-GraphTheory
-
-### 1 LargeGraphInformations -> nb of Connected component ...
-
-### 2 ClusteringCoefficient, Diameter , average path length of GRAPH
-
-### 3 Random Graph ErdosReny BarabasiAlbert and associated informations
-
-### 4 Betweenness Centrality
-=======
 # Graph Modularity - Parallel version (MULTITHREADING) MAP-REDUCE
 
 ## Non oriented
@@ -69,4 +56,3 @@
 	- We parallelize thank to the API stream
 
 ### 5. REFERENCES
->>>>>>> gritp5/master
