@@ -9,3 +9,5 @@
 ### 3 Random Graph ErdosReny BarabasiAlbert and associated informations
 
 ### 4 Betweenness Centrality
+
+### 5 Modularity
