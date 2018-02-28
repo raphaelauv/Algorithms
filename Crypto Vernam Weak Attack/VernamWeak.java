@@ -35,10 +35,46 @@ class Couple implements Comparable<Couple>{
 			return 1;
 		}
 	}
-
 }
 
 class VernamWeak {
+	
+	public static void main(String[] args) throws IOException {
+		Key k;
+		
+		//k= new Key(new char[] {1,2,3,4});		
+		k = g();
+		System.out.println(k);
+		
+		/*
+		String rst = c(k, "hello i will be in vacation tomorow");
+		System.out.println(rst);
+		String decoded = c(k, rst); 
+		System.out.println(decoded);
+		*/
+		
+		String englishtxt = readFile("EnglishTxt",StandardCharsets.UTF_8);
+		
+		if(txtIsInASCCI(englishtxt)) {
+			System.out.println("is lATIN ALPHABET TEXTE");
+		}else {
+			System.out.println("is not lATIN ALPHABET TEXTE");
+			return;
+		}
+
+		HashSet<String> hash = getHashSet(1000, "wordsEN.txt");
+		String encodedText = c(k,englishtxt);
+	
+		int [][] allKeys = findKeys(encodedText);
+		Key bestFind = getBetterKeyPossible(allKeys,encodedText,hash);
+		
+		String decodedText = c(bestFind,encodedText);
+		float resultFind = getEnglishScore(hash, decodedText);
+		System.out.println("score find "+resultFind+ " whith "+bestFind);
+		System.out.println("----------------------------------------------");
+		System.out.println(decodedText);
+		
+	}
 	
 	
 	public static String readFile(String path, Charset encoding) throws IOException {
@@ -300,52 +336,7 @@ class VernamWeak {
 		return allKeys;
 	}
 
-	public static void main(String[] args) throws IOException {
-		
-		Key k = g();
-		//Key k = new Key(new char[] {1,2,3,4});
-		System.out.println(k);
-		/*
-		String rst = c(k, "hello i will be in vacation tomorow");
-		System.out.println(rst);
-		String decoded = c(k, rst); 
-		System.out.println(decoded);
-		*/
-		
-		String englishtxt = readFile("EnglishTxt",StandardCharsets.UTF_8);
-		
-		if(txtIsInASCCI(englishtxt)) {
-			System.out.println("is lATIN ALPHABET TEXTE");
-			
-		}else {
-			System.out.println("is not lATIN ALPHABET TEXTE");
-			return;
-		}
-		
-		
-	
 
-		HashSet<String> hash = getHashSet(1000, "wordsEN.txt");
-		
-		String encodedText = c(k,englishtxt);
-		
-		
-		float resultFind =0f;
-		//Key tmpKey;
-		String decodedText ="";
-	
-		int [][] allKeys = findKeys(encodedText);
-		
-		Key bestFind = getBetterKeyPossible(allKeys,encodedText,hash);
-		
-		decodedText = c(bestFind,encodedText);
-		resultFind = getEnglishScore(hash, decodedText);
-		System.out.println("score find "+resultFind+ " whith "+bestFind);
-		System.out.println("----------------------------------------------");
-		System.out.println(decodedText);
-		
-
-	}
 
 	
 	public static Key getBetterKeyPossible(int [][] allKeys, String encodedText ,HashSet<String> hash) {
